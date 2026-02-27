@@ -740,10 +740,10 @@ export default function KeeperManager() {
             {/* FRANCHISE TAG ELIGIBLE SECTION */}
             {ineligiblePlayers.some(p => p.ft_eligible) && (
               <>
-                <div style={{ fontSize: 10, letterSpacing: "0.15em", color: "#a855f7", textTransform: "uppercase", marginBottom: 8 }}>
-                  ⭐ Franchise Tag Available — Check to activate &amp; unlock eligibility
+                <div style={{ fontSize: 10, letterSpacing: "0.15em", color: "#d8b4fe", textTransform: "uppercase", marginBottom: 8, fontWeight: 700 }}>
+                  ⭐ Franchise Tag Available
                 </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 3, marginBottom: 20 }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: isMobile ? 4 : 3, marginBottom: 20 }}>
                   {ineligiblePlayers.filter(p => p.ft_eligible).map(p => {
                     const ftOn = currentFT.has(p.player);
                     const isSelected = currentSelections.has(p.player);
@@ -753,44 +753,47 @@ export default function KeeperManager() {
                       <div key={p.player} style={{
                         padding: isMobile ? "10px 12px" : "10px 14px", borderRadius: 8,
                         cursor: ftOn ? "pointer" : "default",
-                        border: ftOn && isSelected ? `1px solid #a855f766` : ftOn ? "1px solid #a855f733" : "1px solid #2d1b69",
-                        background: ftOn && isSelected ? "#1e1b4b" : ftOn ? "#13111f" : "#0d0b16",
+                        border: ftOn && isSelected ? "1px solid #a855f7" : ftOn ? "1px solid #7c3aed" : "1px solid #581c87",
+                        background: ftOn && isSelected ? "#2e1065" : ftOn ? "#1a0a38" : "#130720",
                         display: "flex", alignItems: "center", gap: 10,
                       }}
                         onClick={() => { if (ftOn) { const disabled = !isSelected && currentSelections.size >= MAX_KEEPERS; if (!disabled) toggleKeeper(p.player); } }}
                       >
-                        {/* FT Toggle */}
+                        {/* FT Toggle switch */}
                         <div onClick={(e) => toggleFranchiseTag(p.player, e)} style={{
-                          width: 44, height: 24, borderRadius: 12, cursor: "pointer", flexShrink: 0,
-                          background: ftOn ? "#a855f7" : "#1e293b", border: `2px solid ${ftOn ? "#a855f7" : "#334155"}`,
+                          width: 44, height: 26, borderRadius: 13, cursor: "pointer", flexShrink: 0,
+                          background: ftOn ? "#9333ea" : "#312e81",
+                          border: `2px solid ${ftOn ? "#c084fc" : "#4338ca"}`,
                           display: "flex", alignItems: "center", padding: "0 3px",
                           transition: "all 0.2s",
                           justifyContent: ftOn ? "flex-end" : "flex-start"
                         }}>
-                          <div style={{ width: 16, height: 16, borderRadius: "50%", background: "#fff" }} />
+                          <div style={{ width: 16, height: 16, borderRadius: "50%", background: ftOn ? "#fff" : "#a5b4fc" }} />
                         </div>
-                        {/* Checkbox (only active if FT on) */}
-                        {ftOn && (
-                          <div style={{
-                            width: 18, height: 18, borderRadius: 4, border: `2px solid ${isSelected ? "#a855f7" : "#334155"}`,
-                            background: isSelected ? "#a855f7" : "transparent",
-                            display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0
-                          }}>
-                            {isSelected && <span style={{ color: "#fff", fontSize: 11 }}>✓</span>}
-                          </div>
-                        )}
-                        {/* Round badge left */}
-                        <div style={{ ...roundStyle(p.keeper_cost), borderRadius: 8, padding: isMobile ? "6px 0" : "4px 0", minWidth: isMobile ? 46 : 52, textAlign: "center", flexShrink: 0, opacity: ftOn ? 1 : 0.35 }}>
+                        {/* Round badge */}
+                        <div style={{ ...roundStyle(p.keeper_cost), borderRadius: 8, padding: isMobile ? "6px 0" : "4px 0", minWidth: isMobile ? 46 : 52, textAlign: "center", flexShrink: 0, opacity: ftOn ? 1 : 0.5 }}>
                           <div style={{ fontSize: isMobile ? 14 : 13, fontWeight: 900, lineHeight: 1 }}>R{p.keeper_cost}</div>
                           {hasMissing && <div style={{ fontSize: 9, marginTop: 2 }}>🚫</div>}
                         </div>
+                        {/* Player info */}
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: isMobile ? 14 : 13, fontWeight: 600, color: ftOn ? "#c4b5fd" : "#6d28d9", lineHeight: 1.2 }}>{p.player}</div>
-                          <div style={{ fontSize: 11, color: ftOn ? "#a855f7" : "#4c1d95", marginTop: 2 }}>
-                            ⭐ FT · R{p.round_2025}{p.was_keeper_2025 ? " 🔁" : ""}
-                            {!ftOn && <span style={{ color: "#7c3aed" }}> — toggle to activate</span>}
+                          <div style={{ fontSize: isMobile ? 14 : 13, fontWeight: 700, color: ftOn ? "#e9d5ff" : "#a78bfa", lineHeight: 1.2 }}>{p.player}</div>
+                          <div style={{ fontSize: 11, marginTop: 2, color: ftOn ? "#c084fc" : "#7c3aed" }}>
+                            ⭐ FT · Drafted R{p.round_2025}{p.was_keeper_2025 ? " 🔁" : ""}
+                            {!ftOn && <span style={{ color: "#a78bfa" }}> — flip toggle to activate</span>}
                           </div>
                         </div>
+                        {/* Checkbox when FT is on */}
+                        {ftOn && (
+                          <div style={{
+                            width: 22, height: 22, borderRadius: 6, flexShrink: 0,
+                            border: `2px solid ${isSelected ? "#a855f7" : "#6d28d9"}`,
+                            background: isSelected ? "#9333ea" : "transparent",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                          }}>
+                            {isSelected && <span style={{ color: "#fff", fontSize: 13, fontWeight: 900 }}>✓</span>}
+                          </div>
+                        )}
                       </div>
                     );
                   })}
@@ -801,26 +804,28 @@ export default function KeeperManager() {
             {/* INELIGIBLE SECTION */}
             {ineligiblePlayers.filter(p => !p.ft_eligible).length > 0 && (
               <>
-                <div style={{ fontSize: 10, letterSpacing: "0.15em", color: "#ef4444", textTransform: "uppercase", marginBottom: 8 }}>
-                  ✗ Ineligible Players ({ineligiblePlayers.filter(p => !p.ft_eligible).length})
+                <div style={{ fontSize: 10, letterSpacing: "0.15em", color: "#f87171", textTransform: "uppercase", marginBottom: 8, fontWeight: 700 }}>
+                  ✗ Ineligible ({ineligiblePlayers.filter(p => !p.ft_eligible).length})
                 </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: isMobile ? 4 : 3 }}>
                   {ineligiblePlayers.filter(p => !p.ft_eligible).map(p => (
                     <div key={p.player} style={{
-                      padding: isMobile ? "8px 12px" : "8px 14px", borderRadius: 8, opacity: 0.45,
-                      border: "1px solid #1e293b", background: "#0d1117",
+                      padding: isMobile ? "8px 12px" : "8px 14px", borderRadius: 8,
+                      border: "1px solid #7f1d1d",
+                      background: "#1c0707",
                       display: "flex", alignItems: "center", gap: 10,
                     }}>
-                      {/* Round badge */}
-                      <div style={{ background: "#1e293b", border: "1px solid #334155", borderRadius: 8, padding: isMobile ? "6px 0" : "4px 0", minWidth: isMobile ? 46 : 52, textAlign: "center", flexShrink: 0 }}>
-                        <div style={{ fontSize: isMobile ? 14 : 13, fontWeight: 900, color: "#4b5563", lineHeight: 1 }}>R{p.keeper_cost}</div>
+                      {/* Round badge — muted red tint */}
+                      <div style={{ background: "#450a0a", border: "1px solid #7f1d1d", borderRadius: 8, padding: isMobile ? "6px 0" : "4px 0", minWidth: isMobile ? 46 : 52, textAlign: "center", flexShrink: 0 }}>
+                        <div style={{ fontSize: isMobile ? 14 : 13, fontWeight: 900, color: "#fca5a5", lineHeight: 1 }}>R{p.keeper_cost}</div>
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: isMobile ? 14 : 13, color: "#6b7280", textDecoration: "line-through", lineHeight: 1.2 }}>{p.player}</div>
-                        <div style={{ fontSize: 11, color: "#4b5563", marginTop: 2 }}>
-                          {p.ft_maxed ? "⭐ FT maxed" : p.ineligible_reason?.split("—")[0].trim() || "Ineligible"}
+                        <div style={{ fontSize: isMobile ? 14 : 13, color: "#fca5a5", textDecoration: "line-through", lineHeight: 1.2 }}>{p.player}</div>
+                        <div style={{ fontSize: 11, color: "#f87171", marginTop: 2 }}>
+                          {p.ft_maxed ? "⭐ FT maxed (5 seasons)" : p.ineligible_reason?.split("—")[0].trim() || "Service time expired"}
                         </div>
                       </div>
+                      <div style={{ fontSize: 10, color: "#ef4444", fontWeight: 700 }}>✗</div>
                     </div>
                   ))}
                 </div>
