@@ -471,13 +471,13 @@ export default function KeeperManager() {
   );
 
   return (
-    <div style={{ fontFamily: "'Courier New', monospace", background: "#0a0a0f", minHeight: "100vh", color: "#e2e8f0" }}>
+    <div style={{ fontFamily: "'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif", background: "#0a0a0f", minHeight: "100vh", color: "#e2e8f0" }}>
       {/* Header */}
       <div style={{ background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)", borderBottom: "1px solid #1e3a5f", padding: "20px 24px" }}>
         <div style={{ maxWidth: 1400, margin: "0 auto" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
             <div>
-              <div style={{ fontSize: 11, letterSpacing: "0.25em", color: "#64748b", textTransform: "uppercase", marginBottom: 4 }}>Pete Rose's Fantasy League</div>
+              <div style={{ fontSize: 11, letterSpacing: "0.25em", color: "#94a3b8", textTransform: "uppercase", marginBottom: 4 }}>Pete Rose's Fantasy League</div>
               <h1 style={{ fontSize: 26, fontWeight: 900, color: "#f1f5f9", letterSpacing: "-0.02em", margin: 0 }}>⚾ 2026 KEEPER MANAGER</h1>
               <div style={{ fontSize: 10, color: "#22c55e", marginTop: 3 }}>✓ Verified · SL=1 players are 2025-expired · FT max = 5 seasons total</div>
             </div>
@@ -493,7 +493,7 @@ export default function KeeperManager() {
         <div style={{ maxWidth: 1400, margin: "0 auto", padding: "24px 16px", display: "grid", gridTemplateColumns: "220px 1fr", gap: 20 }}>
           {/* Owner List */}
           <div>
-            <div style={{ fontSize: 10, letterSpacing: "0.2em", color: "#475569", textTransform: "uppercase", marginBottom: 10 }}>Owners</div>
+            <div style={{ fontSize: 10, letterSpacing: "0.2em", color: "#94a3b8", textTransform: "uppercase", marginBottom: 10 }}>Owners</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
               {OWNER_ORDER.map(owner => {
                 const data = KEEPER_DATA[owner];
@@ -510,7 +510,7 @@ export default function KeeperManager() {
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <div>
                         <div style={{ fontSize: 13, fontWeight: 700, color: isActive ? color : "#94a3b8" }}>{owner}</div>
-                        <div style={{ fontSize: 10, color: "#475569", marginTop: 1 }}>{data.teamName}</div>
+                        <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 1 }}>{data.teamName}</div>
                       </div>
                       <div style={{
                         fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 999,
@@ -530,7 +530,7 @@ export default function KeeperManager() {
             <div style={{ background: "#111827", border: `1px solid ${ownerColor}44`, borderRadius: 12, padding: "18px 22px", marginBottom: 16 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12 }}>
                 <div>
-                  <div style={{ fontSize: 10, letterSpacing: "0.2em", color: "#475569", textTransform: "uppercase" }}>{ownerData.teamName}</div>
+                  <div style={{ fontSize: 10, letterSpacing: "0.2em", color: "#94a3b8", textTransform: "uppercase" }}>{ownerData.teamName}</div>
                   <div style={{ fontSize: 22, fontWeight: 900, color: ownerColor, marginTop: 4 }}>{selectedOwner}</div>
                   {missingPicks.length > 0 && (
                     <div style={{ fontSize: 10, color: "#f97316", marginTop: 4 }}>
@@ -541,15 +541,15 @@ export default function KeeperManager() {
                 <div style={{ display: "flex", gap: 16 }}>
                   <div style={{ textAlign: "center" }}>
                     <div style={{ fontSize: 28, fontWeight: 900, color: currentSelections.size >= MAX_KEEPERS ? "#ef4444" : ownerColor }}>{currentSelections.size}</div>
-                    <div style={{ fontSize: 10, color: "#475569" }}>SELECTED</div>
+                    <div style={{ fontSize: 10, color: "#94a3b8" }}>SELECTED</div>
                   </div>
                   <div style={{ textAlign: "center" }}>
-                    <div style={{ fontSize: 28, fontWeight: 900, color: "#475569" }}>{MAX_KEEPERS}</div>
-                    <div style={{ fontSize: 10, color: "#475569" }}>MAX</div>
+                    <div style={{ fontSize: 28, fontWeight: 900, color: "#94a3b8" }}>{MAX_KEEPERS}</div>
+                    <div style={{ fontSize: 10, color: "#94a3b8" }}>MAX</div>
                   </div>
                   <div style={{ textAlign: "center" }}>
-                    <div style={{ fontSize: 28, fontWeight: 900, color: "#64748b" }}>{eligiblePlayers.length}</div>
-                    <div style={{ fontSize: 10, color: "#475569" }}>ELIGIBLE</div>
+                    <div style={{ fontSize: 28, fontWeight: 900, color: "#94a3b8" }}>{eligiblePlayers.length}</div>
+                    <div style={{ fontSize: 10, color: "#94a3b8" }}>ELIGIBLE</div>
                   </div>
                 </div>
               </div>
@@ -557,7 +557,7 @@ export default function KeeperManager() {
               {/* Selected keeper summary */}
               {currentSelections.size > 0 && (
                 <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid #1e293b" }}>
-                  <div style={{ fontSize: 10, letterSpacing: "0.15em", color: "#475569", textTransform: "uppercase", marginBottom: 8 }}>Selected Keepers → Picks Forfeited</div>
+                  <div style={{ fontSize: 10, letterSpacing: "0.15em", color: "#94a3b8", textTransform: "uppercase", marginBottom: 8 }}>Selected Keepers → Picks Forfeited</div>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                     {selectedPlayers.map(p => {
                       const hasConflict = conflictRounds.has(p.keeper_cost);
@@ -595,7 +595,7 @@ export default function KeeperManager() {
             </div>
 
             {/* Legend */}
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12, fontSize: 10, color: "#475569", alignItems: "center" }}>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12, fontSize: 10, color: "#94a3b8", alignItems: "center" }}>
               <span>⭐ Franchise tagged</span>
               <span>🔁 Was 2025 keeper</span>
               <span>🚫 Pick traded away</span>
@@ -638,8 +638,8 @@ export default function KeeperManager() {
                         {usingFT && "⭐"}{p.was_keeper_2025 && " 🔁"}
                       </span>
                     </div>
-                    <div style={{ fontSize: 11, color: "#475569", minWidth: 65, textAlign: "right" }}>Drafted R{p.round_2025}</div>
-                    <div style={{ fontSize: 11, color: "#334155" }}>→</div>
+                    <div style={{ fontSize: 11, color: "#94a3b8", minWidth: 65, textAlign: "right" }}>Drafted R{p.round_2025}</div>
+                    <div style={{ fontSize: 11, color: "#94a3b8" }}>→</div>
                     <div style={{ padding: "3px 10px", borderRadius: 6, fontSize: 11, fontWeight: 800, minWidth: 90, textAlign: "center", ...roundStyle(p.keeper_cost) }}>
                       Forfeit R{p.keeper_cost}{hasMissing ? " 🚫" : ""}
                     </div>
@@ -693,11 +693,11 @@ export default function KeeperManager() {
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <span style={{ fontSize: 13, fontWeight: 600, color: ftOn ? "#c4b5fd" : "#4c1d95" }}>{p.player}</span>
                           <span style={{ marginLeft: 8, fontSize: 10, color: ftOn ? "#a855f7" : "#4c1d95" }}>⭐ FT</span>
-                          {p.was_keeper_2025 && <span style={{ marginLeft: 4, fontSize: 10, color: "#475569" }}>🔁</span>}
-                          {!ftOn && <span style={{ marginLeft: 8, fontSize: 10, color: "#4c1d95" }}>Toggle to activate franchise tag</span>}
+                          {p.was_keeper_2025 && <span style={{ marginLeft: 4, fontSize: 10, color: "#94a3b8" }}>🔁</span>}
+                          {!ftOn && <span style={{ marginLeft: 8, fontSize: 10, color: "#7c3aed" }}>Toggle to activate franchise tag</span>}
                         </div>
-                        <div style={{ fontSize: 11, color: "#4c1d95", minWidth: 65, textAlign: "right" }}>R{p.round_2025}</div>
-                        <div style={{ fontSize: 11, color: "#2d1b69" }}>→</div>
+                        <div style={{ fontSize: 11, color: "#7c3aed", minWidth: 65, textAlign: "right" }}>R{p.round_2025}</div>
+                        <div style={{ fontSize: 11, color: "#6d28d9" }}>→</div>
                         <div style={{ padding: "3px 10px", borderRadius: 6, fontSize: 11, fontWeight: 800, minWidth: 90, textAlign: "center", opacity: ftOn ? 1 : 0.4, ...roundStyle(p.keeper_cost) }}>
                           Forfeit R{p.keeper_cost}{hasMissing ? " 🚫" : ""}
                         </div>
@@ -723,12 +723,12 @@ export default function KeeperManager() {
                     }}>
                       <div style={{ width: 18, height: 18, borderRadius: 4, border: "2px solid #1e293b", background: "transparent", flexShrink: 0 }} />
                       <div style={{ flex: 1 }}>
-                        <span style={{ fontSize: 13, color: "#374151", textDecoration: "line-through" }}>{p.player}</span>
+                        <span style={{ fontSize: 13, color: "#9ca3af", textDecoration: "line-through" }}>{p.player}</span>
                         {p.ft_maxed && <span style={{ marginLeft: 8, fontSize: 10, color: "#dc2626" }}>⭐MAX</span>}
-                        {p.was_keeper_2025 && <span style={{ marginLeft: 4, fontSize: 10, color: "#374151" }}>🔁</span>}
+                        {p.was_keeper_2025 && <span style={{ marginLeft: 4, fontSize: 10, color: "#9ca3af" }}>🔁</span>}
                       </div>
-                      <div style={{ fontSize: 10, color: "#4b5563", fontStyle: "italic", maxWidth: 280, textAlign: "right" }}>{p.ineligible_reason}</div>
-                      <div style={{ padding: "3px 10px", borderRadius: 6, fontSize: 11, fontWeight: 800, minWidth: 90, textAlign: "center", background: "#1e293b", color: "#374151", border: "1px solid #374151" }}>
+                      <div style={{ fontSize: 10, color: "#9ca3af", fontStyle: "italic", maxWidth: 280, textAlign: "right" }}>{p.ineligible_reason}</div>
+                      <div style={{ padding: "3px 10px", borderRadius: 6, fontSize: 11, fontWeight: 800, minWidth: 90, textAlign: "center", background: "#1e293b", color: "#9ca3af", border: "1px solid #4b5563" }}>
                         R{p.keeper_cost}
                       </div>
                     </div>
@@ -743,7 +743,7 @@ export default function KeeperManager() {
       {/* SUMMARY VIEW */}
       {viewMode === "summary" && (
         <div style={{ maxWidth: 1400, margin: "0 auto", padding: "24px 16px" }}>
-          <div style={{ fontSize: 10, letterSpacing: "0.2em", color: "#475569", textTransform: "uppercase", marginBottom: 16 }}>
+          <div style={{ fontSize: 10, letterSpacing: "0.2em", color: "#94a3b8", textTransform: "uppercase", marginBottom: 16 }}>
             Keeper Selections by Team
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 16 }}>
@@ -763,7 +763,7 @@ export default function KeeperManager() {
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
                     <div>
                       <div style={{ fontSize: 15, fontWeight: 800, color }}>{owner}</div>
-                      <div style={{ fontSize: 10, color: "#475569" }}>{data.teamName}</div>
+                      <div style={{ fontSize: 10, color: "#94a3b8" }}>{data.teamName}</div>
                     </div>
                     <div style={{
                       fontSize: 13, fontWeight: 700, padding: "3px 10px", borderRadius: 999,
@@ -773,7 +773,7 @@ export default function KeeperManager() {
                   </div>
 
                   {kept.length === 0 ? (
-                    <div style={{ fontSize: 12, color: "#374151", fontStyle: "italic", textAlign: "center", padding: "12px 0" }}>No keepers selected</div>
+                    <div style={{ fontSize: 12, color: "#9ca3af", fontStyle: "italic", textAlign: "center", padding: "12px 0" }}>No keepers selected</div>
                   ) : (
                     <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                       {kept.sort((a, b) => a.keeper_cost - b.keeper_cost).map(p => {
@@ -791,7 +791,7 @@ export default function KeeperManager() {
                             <div style={{ flex: 1 }}>
                               <span style={{ fontSize: 12, color: hasIssue ? "#fca5a5" : "#94a3b8" }}>{p.player}</span>
                               {usingFT && <span style={{ marginLeft: 4, fontSize: 10, color: "#a855f7" }}>⭐FT</span>}
-                              {p.was_keeper_2025 && <span style={{ marginLeft: 4, fontSize: 10, color: "#475569" }}>🔁</span>}
+                              {p.was_keeper_2025 && <span style={{ marginLeft: 4, fontSize: 10, color: "#94a3b8" }}>🔁</span>}
                               {hasConflict && <span style={{ marginLeft: 4, fontSize: 10 }}>⚠️ dup round</span>}
                               {hasMissing && <span style={{ marginLeft: 4, fontSize: 10 }}>🚫 traded pick</span>}
                             </div>
@@ -813,9 +813,9 @@ export default function KeeperManager() {
                       <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid #1e293b" }}>
                         <div style={{ fontSize: 9, letterSpacing: "0.1em", color: "#ef4444", textTransform: "uppercase", marginBottom: 4 }}>Ineligible ({ineligList.length})</div>
                         {ineligList.map(p => (
-                          <div key={p.player} style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "#374151", padding: "2px 0" }}>
+                          <div key={p.player} style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "#9ca3af", padding: "2px 0" }}>
                             <span style={{ textDecoration: "line-through" }}>{p.player}</span>
-                            <span style={{ color: "#4b5563", fontStyle: "italic", maxWidth: 180, textAlign: "right" }}>
+                            <span style={{ color: "#9ca3af", fontStyle: "italic", maxWidth: 180, textAlign: "right" }}>
                               {p.ft_maxed ? "FT maxed" : p.ft_eligible ? "expired (FT avail)" : p.ineligible_reason}
                             </span>
                           </div>
@@ -839,11 +839,11 @@ export default function KeeperManager() {
       {/* LEAGUE VIEW */}
       {viewMode === "league" && (
         <div style={{ maxWidth: 1400, margin: "0 auto", padding: "24px 16px" }}>
-          <div style={{ fontSize: 10, letterSpacing: "0.2em", color: "#475569", textTransform: "uppercase", marginBottom: 16 }}>
+          <div style={{ fontSize: 10, letterSpacing: "0.2em", color: "#94a3b8", textTransform: "uppercase", marginBottom: 16 }}>
             All League Keepers — sorted by pick cost
           </div>
           {leagueKeepers.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "60px 0", color: "#475569" }}>
+            <div style={{ textAlign: "center", padding: "60px 0", color: "#94a3b8" }}>
               <div style={{ fontSize: 40, marginBottom: 12 }}>⚾</div>
               <div>No keepers selected yet. Go to Team View to make selections.</div>
             </div>
@@ -867,11 +867,11 @@ export default function KeeperManager() {
                     <div style={{ flex: 1 }}>
                       <span style={{ fontSize: 13, fontWeight: 700, color: "#f1f5f9" }}>{p.player}</span>
                       {usingFT && <span style={{ marginLeft: 6, fontSize: 10, color: "#a855f7" }}>⭐ FT</span>}
-                      {p.was_keeper_2025 && <span style={{ marginLeft: 6, fontSize: 10, color: "#475569" }}>🔁</span>}
+                      {p.was_keeper_2025 && <span style={{ marginLeft: 6, fontSize: 10, color: "#94a3b8" }}>🔁</span>}
                     </div>
                     <div style={{ fontSize: 11, color, fontWeight: 700 }}>{p.owner}</div>
-                    <div style={{ fontSize: 11, color: "#475569" }}>{p.teamName}</div>
-                    <div style={{ fontSize: 10, color: "#334155" }}>drafted R{p.round_2025}</div>
+                    <div style={{ fontSize: 11, color: "#94a3b8" }}>{p.teamName}</div>
+                    <div style={{ fontSize: 10, color: "#94a3b8" }}>drafted R{p.round_2025}</div>
                   </div>
                 );
               })}
@@ -883,7 +883,7 @@ export default function KeeperManager() {
       {/* DRAFT PICKS VIEW */}
       {viewMode === "picks" && (
         <div style={{ maxWidth: 1400, margin: "0 auto", padding: "24px 16px" }}>
-          <div style={{ fontSize: 10, letterSpacing: "0.2em", color: "#475569", textTransform: "uppercase", marginBottom: 16 }}>
+          <div style={{ fontSize: 10, letterSpacing: "0.2em", color: "#94a3b8", textTransform: "uppercase", marginBottom: 16 }}>
             2026 Draft Pick Inventory
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 16 }}>
@@ -896,7 +896,7 @@ export default function KeeperManager() {
               return (
                 <div key={owner} style={{ background: "#111827", border: `1px solid ${color}33`, borderRadius: 12, padding: "16px 20px" }}>
                   <div style={{ fontSize: 15, fontWeight: 800, color, marginBottom: 2 }}>{owner}</div>
-                  <div style={{ fontSize: 10, color: "#475569", marginBottom: 12 }}>{data.teamName}</div>
+                  <div style={{ fontSize: 10, color: "#94a3b8", marginBottom: 12 }}>{data.teamName}</div>
                   {missingRounds.length > 0 && (
                     <div style={{ fontSize: 10, color: "#f97316", marginBottom: 8 }}>🚫 Traded away: R{missingRounds.join(", R")}</div>
                   )}
@@ -915,7 +915,7 @@ export default function KeeperManager() {
                       <div key={`ex-${i}`} style={{ padding: "2px 7px", borderRadius: 4, fontSize: 10, fontWeight: 700, background: "#78350f", color: "#fbbf24", border: "1px solid #f59e0b" }}>R{ep.round}*</div>
                     ))}
                   </div>
-                  <div style={{ fontSize: 9, color: "#374151", marginTop: 6 }}>* = acquired pick</div>
+                  <div style={{ fontSize: 9, color: "#9ca3af", marginTop: 6 }}>* = acquired pick</div>
                 </div>
               );
             })}
