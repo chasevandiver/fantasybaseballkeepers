@@ -380,13 +380,29 @@ export default function KeeperManager() {
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 640);
 
   useEffect(() => {
+    // Force correct mobile viewport
     let meta = document.querySelector('meta[name="viewport"]');
-    if (!meta) {
-      meta = document.createElement('meta');
-      meta.name = 'viewport';
-      document.head.appendChild(meta);
+    if (!meta) { meta = document.createElement('meta'); meta.name = 'viewport'; document.head.appendChild(meta); }
+    meta.content = 'width=device-width, initial-scale=1.0, viewport-fit=cover';
+
+    // Kill white background on html/body everywhere — including zoom-out
+    const styleId = 'keeper-global-style';
+    if (!document.getElementById(styleId)) {
+      const style = document.createElement('style');
+      style.id = styleId;
+      style.textContent = `
+        *, *::before, *::after { box-sizing: border-box; }
+        html, body { background: #0a0a0f !important; min-height: 100%; overscroll-behavior: none; }
+        body { -webkit-tap-highlight-color: transparent; }
+        #root, [data-reactroot] { background: #0a0a0f; }
+        button { font-family: inherit; -webkit-appearance: none; appearance: none; touch-action: manipulation; }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: #111827; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 2px; }
+      `;
+      document.head.appendChild(style);
     }
-    meta.content = 'width=device-width, initial-scale=1, maximum-scale=1';
+
     const handler = () => setIsMobile(window.innerWidth < 640);
     window.addEventListener('resize', handler);
     return () => window.removeEventListener('resize', handler);
@@ -477,43 +493,65 @@ export default function KeeperManager() {
     return { background: "#1e293b", color: "#94a3b8", border: "1px solid #334155" };
   };
 
-  const btn = (mode, label) => (
+  const NAV_ITEMS = [
+    ["team", "🏟", "Team"],
+    ["summary", "📋", "Summary"],
+    ["league", "🗂", "League"],
+    ["picks", "🎯", "Picks"],
+  ];
+
+  const btn = (mode, emoji, label) => (
     <button key={mode} onClick={() => setViewMode(mode)} style={{
-      padding: isMobile ? "7px 10px" : "8px 18px",
+      padding: isMobile ? "8px 4px" : "8px 18px",
       borderRadius: 6, border: "none", cursor: "pointer",
       fontSize: isMobile ? 11 : 12, fontWeight: 700,
       background: viewMode === mode ? "#3b82f6" : "#1e293b",
       color: viewMode === mode ? "#fff" : "#94a3b8",
       flex: isMobile ? "1 1 0" : "none",
-      whiteSpace: "nowrap",
-    }}>{isMobile ? label.split(' ')[0] : label}</button>
+      display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
+      lineHeight: 1.2,
+    }}>
+      {isMobile ? <><span style={{ fontSize: 16 }}>{emoji}</span><span>{label}</span></> : `${emoji} ${label} View`}
+    </button>
   );
 
   return (
-    <div style={{ fontFamily: "'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif", background: "#0a0a0f", minHeight: "100vh", color: "#e2e8f0" }}>
+    <div style={{ fontFamily: "'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif", background: "#0a0a0f", minHeight: "100dvh", color: "#e2e8f0", position: "relative" }}>
       {/* Header */}
-      <div style={{ background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)", borderBottom: "1px solid #1e3a5f", padding: isMobile ? "14px 16px" : "20px 24px" }}>
+      <div style={{ background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)", borderBottom: "1px solid #1e3a5f", padding: isMobile ? "12px 12px 8px" : "20px 24px" }}>
         <div style={{ maxWidth: 1400, margin: "0 auto" }}>
-          <div style={{ display: "flex", alignItems: isMobile ? "flex-start" : "center", justifyContent: "space-between", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 10 : 12 }}>
-            <div>
-              <div style={{ fontSize: 11, letterSpacing: "0.25em", color: "#94a3b8", textTransform: "uppercase", marginBottom: 4 }}>Pete Rose's Fantasy League</div>
-              <h1 style={{ fontSize: isMobile ? 20 : 26, fontWeight: 900, color: "#f1f5f9", letterSpacing: "-0.02em", margin: 0 }}>⚾ 2026 KEEPER MANAGER</h1>
-              {!isMobile && <div style={{ fontSize: 10, color: "#22c55e", marginTop: 3 }}>✓ Verified · SL=1 players are 2025-expired · FT max = 5 seasons total</div>}
+          {isMobile ? (
+            <>
+              <div style={{ marginBottom: 10 }}>
+                <div style={{ fontSize: 10, letterSpacing: "0.2em", color: "#94a3b8", textTransform: "uppercase", marginBottom: 2 }}>Pete Rose's Fantasy League</div>
+                <h1 style={{ fontSize: 18, fontWeight: 900, color: "#f1f5f9", margin: 0 }}>⚾ 2026 Keeper Manager</h1>
+              </div>
+              <div style={{ display: "flex", gap: 6, width: "100%" }}>
+                {NAV_ITEMS.map(([m, e, l]) => btn(m, e, l))}
+              </div>
+            </>
+          ) : (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+              <div>
+                <div style={{ fontSize: 11, letterSpacing: "0.25em", color: "#94a3b8", textTransform: "uppercase", marginBottom: 4 }}>Pete Rose's Fantasy League</div>
+                <h1 style={{ fontSize: 26, fontWeight: 900, color: "#f1f5f9", letterSpacing: "-0.02em", margin: 0 }}>⚾ 2026 KEEPER MANAGER</h1>
+                <div style={{ fontSize: 10, color: "#22c55e", marginTop: 3 }}>✓ Verified · SL=1 players are 2025-expired · FT max = 5 seasons total</div>
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                {NAV_ITEMS.map(([m, e, l]) => btn(m, e, l))}
+              </div>
             </div>
-            <div style={{ display: "flex", gap: 6, flexWrap: "nowrap", width: isMobile ? "100%" : "auto" }}>
-              {[["team", "🏟 Team View"], ["summary", "📋 Summary"], ["league", "🗂 League View"], ["picks", "🎯 Draft Picks"]].map(([m, l]) => btn(m, l))}
-            </div>
-          </div>
+          )}
         </div>
       </div>
 
       {/* TEAM VIEW */}
       {viewMode === "team" && (
-        <div style={{ maxWidth: 1400, margin: "0 auto", padding: isMobile ? "12px 10px" : "24px 16px", display: "grid", gridTemplateColumns: isMobile ? "1fr" : "220px 1fr", gap: isMobile ? 12 : 20 }}>
+        <div style={{ maxWidth: 1400, margin: "0 auto", padding: isMobile ? "10px 10px 24px" : "24px 16px", display: "grid", gridTemplateColumns: isMobile ? "1fr" : "220px 1fr", gap: isMobile ? 10 : 20 }}>
           {/* Owner List */}
           <div>
             <div style={{ fontSize: 10, letterSpacing: "0.2em", color: "#94a3b8", textTransform: "uppercase", marginBottom: 10 }}>Owners</div>
-            <div style={{ display: "flex", flexDirection: isMobile ? "row" : "column", gap: 4, overflowX: isMobile ? "auto" : "visible", paddingBottom: isMobile ? 4 : 0 }}>
+            <div style={{ display: "flex", flexDirection: isMobile ? "row" : "column", gap: 4, overflowX: isMobile ? "auto" : "visible", overflowY: "visible", WebkitOverflowScrolling: "touch", paddingBottom: isMobile ? 4 : 0, scrollbarWidth: "none", msOverflowStyle: "none" }}>
               {OWNER_ORDER.map(owner => {
                 const data = KEEPER_DATA[owner];
                 const sel = selections[owner];
