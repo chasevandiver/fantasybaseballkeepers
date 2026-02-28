@@ -868,71 +868,64 @@ export default function KeeperManager() {
               })}
             </div>
 
-            {/* ── FRANCHISE TAG ELIGIBLE ── */}
-            {ineligiblePlayers.some(p => p.ft_eligible) && (
+            {/* ── FRANCHISE TAG ELIGIBLE (only those with FT toggled ON) ── */}
+            {ineligiblePlayers.some(p => p.ft_eligible && currentFT.has(p.player)) && (
               <>
                 <div style={{ fontSize: 10, letterSpacing: "0.12em", color: "#d8b4fe", textTransform: "uppercase", marginBottom: 6 }}>
-                  ⭐ Franchise Tag Available — toggle to unlock
+                  ⭐ Franchise Tagged — toggle off to remove
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 3, marginBottom: 18 }}>
-                  {ineligiblePlayers.filter(p => p.ft_eligible).map(p => {
-                    const ftOn      = currentFT.has(p.player);
+                  {ineligiblePlayers.filter(p => p.ft_eligible && currentFT.has(p.player)).map(p => {
                     const isSelected = currentSel.has(p.player);
                     const hasMissing = missingPicks.includes(p.keeper_cost);
-
                     return (
                       <div key={p.player} style={{
                         padding: isMobile ? "10px 10px" : "10px 14px", borderRadius: 8,
-                        cursor: ftOn ? "pointer" : "default",
-                        border: ftOn && isSelected ? "1px solid #a855f766" : ftOn ? "1px solid #7c3aed" : "1px solid #581c87",
-                        background: ftOn && isSelected ? "#1e1b4b" : ftOn ? "#1a0a38" : "#130720",
+                        cursor: "pointer",
+                        border: isSelected ? "1px solid #a855f766" : "1px solid #7c3aed",
+                        background: isSelected ? "#1e1b4b" : "#1a0a38",
                         display: "flex", alignItems: "center", gap: isMobile ? 10 : 12,
                       }}
-                        onClick={() => { if (ftOn) { const disabled = !isSelected && currentSel.size >= MAX_KEEPERS; if (!disabled) toggleKeeper(p.player); } }}
+                        onClick={() => { const disabled = !isSelected && currentSel.size >= MAX_KEEPERS; if (!disabled) toggleKeeper(p.player); }}
                       >
-                        {/* toggle switch */}
+                        {/* Toggle OFF switch */}
                         <div onClick={(e) => toggleFranchiseTag(p.player, e)} style={{
                           width: 44, height: 24, borderRadius: 12, cursor: "pointer", flexShrink: 0,
-                          background: ftOn ? "#9333ea" : "#312e81",
-                          border: `2px solid ${ftOn ? "#9333ea" : "#4338ca"}`,
+                          background: "#9333ea",
+                          border: "2px solid #9333ea",
                           display: "flex", alignItems: "center",
-                          padding: "0 3px",
-                          justifyContent: ftOn ? "flex-end" : "flex-start",
+                          padding: "0 3px", justifyContent: "flex-end",
                           transition: "all 0.15s",
                         }}>
-                          <div style={{ width: 16, height: 16, borderRadius: "50%", background: ftOn ? "#fff" : "#a5b4fc" }} />
+                          <div style={{ width: 16, height: 16, borderRadius: "50%", background: "#fff" }} />
                         </div>
-                        {/* checkbox (active when FT on) */}
-                        {ftOn && (
-                          <div style={{
-                            width: 20, height: 20, borderRadius: 5, flexShrink: 0,
-                            border: `2px solid ${isSelected ? "#a855f7" : "#4c1d95"}`,
-                            background: isSelected ? "#a855f7" : "transparent",
-                            display: "flex", alignItems: "center", justifyContent: "center",
-                          }}>
-                            {isSelected && <span style={{ color: "#fff", fontSize: 12 }}>✓</span>}
-                          </div>
-                        )}
-                        {/* name */}
+                        {/* Checkbox */}
+                        <div style={{
+                          width: 20, height: 20, borderRadius: 5, flexShrink: 0,
+                          border: `2px solid ${isSelected ? "#a855f7" : "#4c1d95"}`,
+                          background: isSelected ? "#a855f7" : "transparent",
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                        }}>
+                          {isSelected && <span style={{ color: "#fff", fontSize: 12 }}>✓</span>}
+                        </div>
+                        {/* Name */}
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: isMobile ? 14 : 13, fontWeight: 600, color: ftOn ? "#e9d5ff" : "#a78bfa" }}>
-                            {p.player} <span style={{ fontSize: 10, color: ftOn ? "#c084fc" : "#7c3aed" }}>⭐ FT</span>
+                          <div style={{ fontSize: isMobile ? 14 : 13, fontWeight: 600, color: "#e9d5ff" }}>
+                            {p.player} <span style={{ fontSize: 10, color: "#c084fc" }}>⭐ Franchise Tag</span>
                             {p.was_keeper_2025 && <span style={{ fontSize: 10, color: "#94a3b8", marginLeft: 4 }}>🔁</span>}
                           </div>
-                          {isMobile && <div style={{ fontSize: 11, color: "#7c3aed" }}>Drafted R{p.round_2025}{!ftOn ? " — toggle to activate" : ""}</div>}
-                          {!isMobile && !ftOn && <div style={{ fontSize: 10, color: "#7c3aed" }}>Toggle to activate franchise tag</div>}
+                          {isMobile && <div style={{ fontSize: 11, color: "#a78bfa" }}>Drafted R{p.round_2025} — toggle off to remove tag</div>}
+                          {!isMobile && <div style={{ fontSize: 10, color: "#a78bfa" }}>Toggle off to remove franchise tag</div>}
                         </div>
                         {!isMobile && <div style={{ fontSize: 11, color: "#6d28d9" }}>Drafted R{p.round_2025}</div>}
                         {!isMobile && <div style={{ fontSize: 11, color: "#6d28d9" }}>→</div>}
-                        <div style={{ padding: "3px 10px", borderRadius: 6, fontSize: 11, fontWeight: 800, minWidth: isMobile ? 46 : 90, textAlign: "center", opacity: ftOn ? 1 : 0.4, ...roundStyle(p.keeper_cost) }}>
+                        <div style={{ padding: "3px 10px", borderRadius: 6, fontSize: 11, fontWeight: 800, minWidth: isMobile ? 46 : 90, textAlign: "center", ...roundStyle(p.keeper_cost) }}>
                           {isMobile ? `R${p.keeper_cost}` : `Forfeit R${p.keeper_cost}`}{hasMissing ? " 🚫" : ""}
                         </div>
-                        {/* SL badge — shows FT last yr */}
                         <div style={{
                           padding: "2px 8px", borderRadius: 6, fontSize: 10, fontWeight: 700,
                           background: "#581c87", color: "#e9d5ff", border: "1px solid #7c3aed",
-                          whiteSpace: "nowrap", textAlign: "center", opacity: ftOn ? 1 : 0.5,
-                          lineHeight: 1.3,
+                          whiteSpace: "nowrap", textAlign: "center", lineHeight: 1.3,
                         }}>
                           <div>Franchise Tag</div>
                           <div style={{ fontSize: 9, opacity: 0.7 }}>→ Done '27</div>
@@ -944,29 +937,53 @@ export default function KeeperManager() {
               </>
             )}
 
-            {/* ── INELIGIBLE ── */}
-            {ineligiblePlayers.filter(p => !p.ft_eligible).length > 0 && (
+            {/* ── INELIGIBLE — includes ft_eligible players with FT toggled OFF ── */}
+            {ineligiblePlayers.some(p => !p.ft_eligible || !currentFT.has(p.player)) && (
               <>
                 <div style={{ fontSize: 10, letterSpacing: "0.12em", color: "#f87171", textTransform: "uppercase", marginBottom: 6 }}>
-                  ✗ Ineligible ({ineligiblePlayers.filter(p => !p.ft_eligible).length})
+                  ✗ Ineligible ({ineligiblePlayers.filter(p => !p.ft_eligible || !currentFT.has(p.player)).length})
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                  {ineligiblePlayers.filter(p => !p.ft_eligible).map(p => (
+                  {ineligiblePlayers.filter(p => !p.ft_eligible || !currentFT.has(p.player)).map(p => (
                     <div key={p.player} style={{
                       padding: isMobile ? "8px 10px" : "8px 14px", borderRadius: 8,
                       border: "1px solid #7f1d1d", background: "#1c0707",
-                      display: "flex", alignItems: "center", gap: isMobile ? 8 : 12
+                      display: "flex", alignItems: "center", gap: isMobile ? 8 : 12,
                     }}>
-                      <div style={{ width: 20, height: 20, borderRadius: 5, background: "#450a0a", border: "1px solid #7f1d1d", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                        <span style={{ color: "#fca5a5", fontSize: 11 }}>✗</span>
-                      </div>
+                      {/* FT toggle button for ft_eligible players sitting in ineligible */}
+                      {p.ft_eligible ? (
+                        <div
+                          onClick={(e) => toggleFranchiseTag(p.player, e)}
+                          title="Apply Franchise Tag to unlock"
+                          style={{
+                            width: 44, height: 24, borderRadius: 12, cursor: "pointer", flexShrink: 0,
+                            background: "#312e81", border: "2px solid #4338ca",
+                            display: "flex", alignItems: "center", padding: "0 3px", justifyContent: "flex-start",
+                            transition: "all 0.15s",
+                          }}
+                        >
+                          <div style={{ width: 16, height: 16, borderRadius: "50%", background: "#a5b4fc" }} />
+                        </div>
+                      ) : (
+                        <div style={{ width: 20, height: 20, borderRadius: 5, background: "#450a0a", border: "1px solid #7f1d1d", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                          <span style={{ color: "#fca5a5", fontSize: 11 }}>✗</span>
+                        </div>
+                      )}
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <span style={{ fontSize: 13, color: "#fca5a5", textDecoration: "line-through" }}>{p.player}</span>
-                        {p.ft_maxed && <span style={{ marginLeft: 6, fontSize: 10, color: "#dc2626" }}>⭐MAX</span>}
+                        <span style={{ fontSize: 13, color: "#fca5a5", textDecoration: p.ft_eligible ? "none" : "line-through" }}>{p.player}</span>
+                        {p.ft_maxed && <span style={{ marginLeft: 6, fontSize: 10, color: "#dc2626" }}>Tag maxed</span>}
                         {p.was_keeper_2025 && <span style={{ marginLeft: 4, fontSize: 10, color: "#94a3b8" }}>🔁</span>}
-                        {isMobile && <div style={{ fontSize: 10, color: "#f87171", fontStyle: "italic", marginTop: 1 }}>{p.ineligible_reason}</div>}
+                        {isMobile && (
+                          <div style={{ fontSize: 10, color: p.ft_eligible ? "#a78bfa" : "#f87171", fontStyle: "italic", marginTop: 1 }}>
+                            {p.ft_eligible ? "Toggle to apply franchise tag" : p.ineligible_reason}
+                          </div>
+                        )}
                       </div>
-                      {!isMobile && <div style={{ fontSize: 10, color: "#f87171", fontStyle: "italic", maxWidth: 280, textAlign: "right" }}>{p.ineligible_reason}</div>}
+                      {!isMobile && (
+                        <div style={{ fontSize: 10, fontStyle: "italic", maxWidth: 280, textAlign: "right", color: p.ft_eligible ? "#a78bfa" : "#f87171" }}>
+                          {p.ft_eligible ? "Toggle to apply franchise tag →" : p.ineligible_reason}
+                        </div>
+                      )}
                       <div style={{ padding: "2px 8px", borderRadius: 6, fontSize: 11, fontWeight: 800, background: "#450a0a", color: "#fca5a5", border: "1px solid #7f1d1d", whiteSpace: "nowrap" }}>
                         R{p.keeper_cost}
                       </div>
