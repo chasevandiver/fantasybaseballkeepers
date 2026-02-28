@@ -455,11 +455,16 @@ export default function KeeperManager() {
     const set = new Set(newFT[selectedOwner]);
     if (set.has(playerName)) {
       set.delete(playerName);
-      const newSel = { ...selections };
-      const selSet = new Set(newSel[selectedOwner]);
-      selSet.delete(playerName);
-      newSel[selectedOwner] = selSet;
-      setSelections(newSel);
+      // Only force-deselect if the player NEEDS FT to be eligible at all (ineligible_reason set)
+      // Players who are already eligible (drafted 2024) can keep their selection with FT off
+      const player = KEEPER_DATA[selectedOwner].players.find(p => p.player === playerName);
+      if (player && player.ineligible_reason !== null) {
+        const newSel = { ...selections };
+        const selSet = new Set(newSel[selectedOwner]);
+        selSet.delete(playerName);
+        newSel[selectedOwner] = selSet;
+        setSelections(newSel);
+      }
     } else { set.add(playerName); }
     newFT[selectedOwner] = set;
     setFranchiseTags(newFT);
@@ -777,6 +782,23 @@ export default function KeeperManager() {
                       </div>
                       {/* SL badge */}
                       <SL_TAG p={p} ftOn={usingFT} />
+                      {/* FT toggle for ft_eligible players in eligible section */}
+                      {p.ft_eligible && (
+                        <div
+                          onClick={(e) => { e.stopPropagation(); toggleFranchiseTag(p.player, e); }}
+                          title={currentFT.has(p.player) ? "Remove Franchise Tag" : "Apply Franchise Tag"}
+                          style={{
+                            width: 38, height: 20, borderRadius: 10, cursor: "pointer", flexShrink: 0,
+                            background: currentFT.has(p.player) ? "#9333ea" : "#312e81",
+                            border: `2px solid ${currentFT.has(p.player) ? "#9333ea" : "#4338ca"}`,
+                            display: "flex", alignItems: "center",
+                            padding: "0 2px",
+                            justifyContent: currentFT.has(p.player) ? "flex-end" : "flex-start",
+                          }}
+                        >
+                          <div style={{ width: 13, height: 13, borderRadius: "50%", background: currentFT.has(p.player) ? "#fff" : "#a5b4fc" }} />
+                        </div>
+                      )}
                       {/* checkbox right */}
                       <div style={{
                         width: 22, height: 22, borderRadius: 5, flexShrink: 0,
@@ -818,6 +840,29 @@ export default function KeeperManager() {
                       Forfeit R{p.keeper_cost}{hasMissing ? " 🚫" : ""}
                     </div>
                     <SL_TAG p={p} ftOn={usingFT} />
+                    {/* FT toggle — visible for all ft_eligible players */}
+                    {p.ft_eligible && (
+                      <div style={{ display: "flex", alignItems: "center", gap: 5, flexShrink: 0 }}>
+                        <div
+                          onClick={(e) => { e.stopPropagation(); toggleFranchiseTag(p.player, e); }}
+                          title={currentFT.has(p.player) ? "Remove Franchise Tag" : "Apply Franchise Tag"}
+                          style={{
+                            width: 44, height: 24, borderRadius: 12, cursor: "pointer",
+                            background: currentFT.has(p.player) ? "#9333ea" : "#312e81",
+                            border: `2px solid ${currentFT.has(p.player) ? "#9333ea" : "#4338ca"}`,
+                            display: "flex", alignItems: "center",
+                            padding: "0 3px",
+                            justifyContent: currentFT.has(p.player) ? "flex-end" : "flex-start",
+                            transition: "all 0.15s",
+                          }}
+                        >
+                          <div style={{ width: 16, height: 16, borderRadius: "50%", background: currentFT.has(p.player) ? "#fff" : "#a5b4fc" }} />
+                        </div>
+                        <span style={{ fontSize: 10, color: currentFT.has(p.player) ? "#c084fc" : "#4338ca", whiteSpace: "nowrap" }}>
+                          {currentFT.has(p.player) ? "⭐ FT" : "FT"}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -960,12 +1005,15 @@ export default function KeeperManager() {
                 const set = new Set(newFT[owner]);
                 if (set.has(playerName)) {
                   set.delete(playerName);
-                  // Also deselect if was selected
-                  const newSel = { ...selections };
-                  const selSet = new Set(newSel[owner]);
-                  selSet.delete(playerName);
-                  newSel[owner] = selSet;
-                  setSelections(newSel);
+                  // Only deselect if player NEEDS FT to be eligible (ineligible_reason set)
+                  const player = data.players.find(p => p.player === playerName);
+                  if (player && player.ineligible_reason !== null) {
+                    const newSel = { ...selections };
+                    const selSet = new Set(newSel[owner]);
+                    selSet.delete(playerName);
+                    newSel[owner] = selSet;
+                    setSelections(newSel);
+                  }
                 } else {
                   set.add(playerName);
                 }
