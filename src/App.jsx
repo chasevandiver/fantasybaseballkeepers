@@ -1,4 +1,12 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect } from "react";
+
+// ============================================================
+// SUPABASE CONFIG — replace these two values with your own
+// Project URL:  Supabase dashboard → Settings → API → Project URL
+// Anon key:     Supabase dashboard → Settings → API → anon public key
+// ============================================================
+const SUPABASE_URL = "https://ugmniarsaqhvxejsruxt.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVnbW5pYXJzYXFodnhlanNydXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MDEyMTAsImV4cCI6MjA4NzM3NzIxMH0.Umxzu41l3wkQhcSdAgAirem0fkRfK571TtCq8afxeSs";
 
 // ============================================================
 // VERIFIED DATA — Cross-referenced from:
@@ -426,29 +434,54 @@ export default function KeeperManager() {
   const [saveStatus, setSaveStatus] = useState("idle"); // "idle" | "saving" | "saved" | "error"
   const [loaded, setLoaded] = useState(false);
 
-  // ── Load from cloud storage on mount ──
+  // ── Supabase helpers ──
+  // Reads the single row for this league from the keeper_picks table
+  const sbFetch = async () => {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/keeper_picks?league_id=eq.pete-rose-2026&select=selections,franchise_tags`,
+      { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
+    );
+    if (!res.ok) throw new Error(await res.text());
+    return res.json(); // array of rows
+  };
+
+  const sbUpsert = async (selObj, ftObj) => {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/keeper_picks`,
+      {
+        method: "POST",
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`,
+          "Content-Type": "application/json",
+          Prefer: "resolution=merge-duplicates",
+        },
+        body: JSON.stringify({
+          league_id: "pete-rose-2026",
+          selections: selObj,
+          franchise_tags: ftObj,
+          updated_at: new Date().toISOString(),
+        }),
+      }
+    );
+    if (!res.ok) throw new Error(await res.text());
+  };
+
+  // ── Load from Supabase on mount ──
   useEffect(() => {
     const load = async () => {
       try {
-        const [selResult, ftResult] = await Promise.all([
-          window.storage.get("keepers-2026-selections", true),
-          window.storage.get("keepers-2026-franchise-tags", true),
-        ]);
-        const init = () => { const o = {}; Object.keys(KEEPER_DATA).forEach(k => { o[k] = new Set(); }); return o; };
-        if (selResult?.value) {
-          const parsed = JSON.parse(selResult.value);
-          const rebuilt = init();
-          Object.entries(parsed).forEach(([owner, arr]) => { if (rebuilt[owner]) rebuilt[owner] = new Set(arr); });
-          setSelections(rebuilt);
+        const rows = await sbFetch();
+        if (rows.length > 0) {
+          const { selections: selObj, franchise_tags: ftObj } = rows[0];
+          const initSets = (obj) => {
+            const o = {}; Object.keys(KEEPER_DATA).forEach(k => { o[k] = new Set(obj?.[k] || []); }); return o;
+          };
+          setSelections(initSets(selObj));
+          setFranchiseTags(initSets(ftObj));
         }
-        if (ftResult?.value) {
-          const parsed = JSON.parse(ftResult.value);
-          const rebuilt = init();
-          Object.entries(parsed).forEach(([owner, arr]) => { if (rebuilt[owner]) rebuilt[owner] = new Set(arr); });
-          setFranchiseTags(rebuilt);
-        }
-      } catch (_) {
-        // Storage empty or unavailable — start fresh
+      } catch (err) {
+        console.error("Failed to load picks:", err);
       } finally {
         setLoaded(true);
       }
@@ -456,24 +489,22 @@ export default function KeeperManager() {
     load();
   }, []);
 
-  // ── Save to cloud storage whenever picks change (debounced) ──
+  // ── Save to Supabase whenever picks change (debounced 800ms) ──
   useEffect(() => {
-    if (!loaded) return; // Don't save the empty initial state before loading
+    if (!loaded) return;
     setSaveStatus("saving");
     const timer = setTimeout(async () => {
       try {
         const selObj = {}; Object.entries(selections).forEach(([o, s]) => { selObj[o] = [...s]; });
         const ftObj  = {}; Object.entries(franchiseTags).forEach(([o, s]) => { ftObj[o]  = [...s]; });
-        await Promise.all([
-          window.storage.set("keepers-2026-selections", JSON.stringify(selObj), true),
-          window.storage.set("keepers-2026-franchise-tags", JSON.stringify(ftObj), true),
-        ]);
+        await sbUpsert(selObj, ftObj);
         setSaveStatus("saved");
-        setTimeout(() => setSaveStatus("idle"), 2000);
-      } catch (_) {
+        setTimeout(() => setSaveStatus("idle"), 2500);
+      } catch (err) {
+        console.error("Save failed:", err);
         setSaveStatus("error");
       }
-    }, 600);
+    }, 800);
     return () => clearTimeout(timer);
   }, [selections, franchiseTags, loaded]);
 
