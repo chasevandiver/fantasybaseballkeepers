@@ -389,9 +389,9 @@ const roundStyle = (r) => {
 };
 
 const slBadge = (sl, usingFT) => {
-  if (usingFT && sl <= 1) return { label: "FT · Last yr", bg: "#581c87", color: "#e9d5ff", border: "1px solid #7c3aed" };
-  if (sl >= 2) return { label: "2 yrs left",  bg: "#14532d", color: "#4ade80", border: "1px solid #166534" };
-  return        { label: "Last yr",   bg: "#7f1d1d", color: "#fca5a5", border: "1px solid #991b1b" };
+  if (usingFT && sl <= 1) return { label: "Franchise Tag", bg: "#581c87", color: "#e9d5ff", border: "1px solid #7c3aed" };
+  if (sl >= 2) return { label: "2 years left", bg: "#14532d", color: "#4ade80", border: "1px solid #166534" };
+  return        { label: "1 year left", bg: "#7f1d1d", color: "#fca5a5", border: "1px solid #991b1b" };
 };
 
 // ─── component ──────────────────────────────────────────────
@@ -889,7 +889,7 @@ export default function KeeperManager() {
                           whiteSpace: "nowrap", textAlign: "center", opacity: ftOn ? 1 : 0.5,
                           lineHeight: 1.3,
                         }}>
-                          <div>FT · Last yr</div>
+                          <div>Franchise Tag</div>
                           <div style={{ fontSize: 9, opacity: 0.7 }}>→ Done '27</div>
                         </div>
                       </div>
@@ -940,7 +940,7 @@ export default function KeeperManager() {
       {viewMode === "summary" && (
         <div style={{ maxWidth: 1400, margin: "0 auto", padding: isMobile ? "12px 10px" : "24px 16px" }}>
           <div style={{ fontSize: 10, letterSpacing: "0.2em", color: "#94a3b8", textTransform: "uppercase", marginBottom: 14 }}>Keeper Selections by Team</div>
-          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(340px,1fr))", gap: 14 }}>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(360px,1fr))", gap: 14 }}>
             {OWNER_ORDER.map(owner => {
               const data = KEEPER_DATA[owner];
               const sel  = selections[owner];
@@ -951,8 +951,31 @@ export default function KeeperManager() {
               const rc = {}; kept.forEach(p => { rc[p.keeper_cost] = (rc[p.keeper_cost] || 0) + 1; });
               const conflicts = new Set(Object.entries(rc).filter(([,v]) => v > 1).map(([k]) => parseInt(k)));
               const inelig = data.players.filter(p => !isEligibleForOwner(p, owner, ft));
+              // Players that have FT toggle available (ft_eligible) — shown in summary for toggling
+              const ftAvailable = data.players.filter(p => p.ft_eligible);
+
+              const toggleSummaryFT = (playerName, e) => {
+                e.stopPropagation();
+                const newFT = { ...franchiseTags };
+                const set = new Set(newFT[owner]);
+                if (set.has(playerName)) {
+                  set.delete(playerName);
+                  // Also deselect if was selected
+                  const newSel = { ...selections };
+                  const selSet = new Set(newSel[owner]);
+                  selSet.delete(playerName);
+                  newSel[owner] = selSet;
+                  setSelections(newSel);
+                } else {
+                  set.add(playerName);
+                }
+                newFT[owner] = set;
+                setFranchiseTags(newFT);
+              };
+
               return (
                 <div key={owner} style={{ background: "#111827", border: `1px solid ${color}33`, borderRadius: 12, padding: "14px 18px" }}>
+                  {/* Team header */}
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
                     <div>
                       <div style={{ fontSize: 15, fontWeight: 800, color }}>{owner}</div>
@@ -962,51 +985,134 @@ export default function KeeperManager() {
                       {kept.length}/{MAX_KEEPERS}
                     </div>
                   </div>
+
+                  {/* Column headers */}
+                  {(kept.length > 0 || ftAvailable.length > 0) && (
+                    <div style={{
+                      display: "grid", gridTemplateColumns: "1fr auto auto",
+                      gap: 6, padding: "3px 8px", marginBottom: 4,
+                    }}>
+                      <div style={{ fontSize: 9, color: "#4b5563", letterSpacing: "0.1em", textTransform: "uppercase" }}>Player</div>
+                      <div style={{ fontSize: 9, color: "#4b5563", letterSpacing: "0.1em", textTransform: "uppercase", textAlign: "center", minWidth: 80 }}>Service Time<br/>Remaining</div>
+                      <div style={{ fontSize: 9, color: "#4b5563", letterSpacing: "0.1em", textTransform: "uppercase", textAlign: "center", minWidth: 36 }}>Pick</div>
+                    </div>
+                  )}
+
+                  {/* Selected keepers */}
                   {kept.length === 0 ? (
                     <div style={{ fontSize: 12, color: "#4b5563", fontStyle: "italic", textAlign: "center", padding: "10px 0" }}>No keepers selected</div>
                   ) : kept.sort((a,b)=>a.keeper_cost-b.keeper_cost).map(p => {
-                    const usingFT   = p.franchise_tag || ft.has(p.player);
-                    const hasMissing = missing.includes(p.keeper_cost);
+                    const usingFT    = p.franchise_tag || ft.has(p.player);
+                    const hasMissing  = missing.includes(p.keeper_cost);
                     const hasConflict = conflicts.has(p.keeper_cost);
-                    const hasIssue = hasMissing || hasConflict;
+                    const hasIssue    = hasMissing || hasConflict;
+                    // service time remaining AFTER being kept in 2026
                     const sl_after = p.service_left === 2 ? 1 : 0;
+                    const slLabel  = sl_after === 0 ? "Done after 2026" : "1 year left";
+                    const slColor  = sl_after === 0 ? "#f87171" : "#4ade80";
                     return (
                       <div key={p.player} style={{
-                        display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6,
-                        padding: "5px 8px", borderRadius: 6, marginBottom: 3,
+                        display: "grid", gridTemplateColumns: "1fr auto auto",
+                        alignItems: "center", gap: 6,
+                        padding: "6px 8px", borderRadius: 6, marginBottom: 3,
                         background: hasIssue ? "#7f1d1d22" : "#0d1117",
                         border: `1px solid ${hasIssue ? "#ef444433" : "#1e293b"}`,
                       }}>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: 12, color: hasIssue ? "#fca5a5" : "#94a3b8" }}>
+                        {/* Player name + flags */}
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontSize: 12, fontWeight: 600, color: hasIssue ? "#fca5a5" : "#e2e8f0", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                             {p.player}
-                            {usingFT && <span style={{ marginLeft: 4, fontSize: 10, color: "#a855f7" }}>⭐FT</span>}
-                            {p.was_keeper_2025 && <span style={{ marginLeft: 4, fontSize: 10, color: "#94a3b8" }}>🔁</span>}
-                            {hasConflict && <span style={{ marginLeft: 4, fontSize: 10 }}>⚠️dup</span>}
-                            {hasMissing && <span style={{ marginLeft: 4, fontSize: 10 }}>🚫traded</span>}
-                          </div>
-                          <div style={{ fontSize: 10, color: sl_after === 0 ? "#f87171" : "#94a3b8" }}>
-                            {sl_after === 0 ? "Done after 2026" : "1 yr left for 2027"}
+                            {usingFT && <span style={{ marginLeft: 4, fontSize: 10, color: "#c084fc" }}>⭐ Franchise Tag</span>}
+                            {p.was_keeper_2025 && <span style={{ marginLeft: 4, fontSize: 10, color: "#64748b" }}>🔁</span>}
+                            {hasConflict && <span style={{ marginLeft: 4, fontSize: 10 }}>⚠️ dup round</span>}
+                            {hasMissing && <span style={{ marginLeft: 4, fontSize: 10 }}>🚫 traded pick</span>}
                           </div>
                         </div>
-                        <div style={{ padding: "2px 8px", borderRadius: 4, fontSize: 10, fontWeight: 800, ...roundStyle(p.keeper_cost) }}>R{p.keeper_cost}</div>
+                        {/* Service time remaining */}
+                        <div style={{
+                          fontSize: 10, fontWeight: 700, textAlign: "center", minWidth: 80,
+                          padding: "2px 6px", borderRadius: 4,
+                          background: sl_after === 0 ? "#7f1d1d" : "#14532d",
+                          color: slColor,
+                          border: `1px solid ${sl_after === 0 ? "#991b1b" : "#166534"}`,
+                          whiteSpace: "nowrap",
+                        }}>
+                          {slLabel}
+                        </div>
+                        {/* Round badge */}
+                        <div style={{ padding: "2px 8px", borderRadius: 4, fontSize: 10, fontWeight: 800, minWidth: 36, textAlign: "center", ...roundStyle(p.keeper_cost) }}>R{p.keeper_cost}</div>
                       </div>
                     );
                   })}
-                  {inelig.length > 0 && (
+
+                  {/* Franchise Tag section — toggleable from summary */}
+                  {ftAvailable.length > 0 && (
+                    <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid #1e293b" }}>
+                      <div style={{ fontSize: 9, letterSpacing: "0.12em", color: "#c084fc", textTransform: "uppercase", marginBottom: 6, fontWeight: 700 }}>
+                        ⭐ Franchise Tag Available
+                      </div>
+                      {ftAvailable.map(p => {
+                        const ftOn = ft.has(p.player);
+                        const isSelected = sel.has(p.player);
+                        return (
+                          <div key={p.player} style={{
+                            display: "flex", alignItems: "center", gap: 8,
+                            padding: "6px 8px", borderRadius: 6, marginBottom: 3,
+                            background: ftOn ? "#1a0a38" : "#130720",
+                            border: `1px solid ${ftOn ? "#7c3aed" : "#3b1d6e"}`,
+                          }}>
+                            {/* Toggle switch */}
+                            <div
+                              onClick={(e) => toggleSummaryFT(p.player, e)}
+                              style={{
+                                width: 38, height: 20, borderRadius: 10, cursor: "pointer", flexShrink: 0,
+                                background: ftOn ? "#9333ea" : "#312e81",
+                                border: `2px solid ${ftOn ? "#9333ea" : "#4338ca"}`,
+                                display: "flex", alignItems: "center",
+                                padding: "0 2px",
+                                justifyContent: ftOn ? "flex-end" : "flex-start",
+                                transition: "all 0.15s",
+                              }}
+                            >
+                              <div style={{ width: 13, height: 13, borderRadius: "50%", background: ftOn ? "#fff" : "#a5b4fc" }} />
+                            </div>
+                            {/* Name */}
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: 11, fontWeight: 600, color: ftOn ? "#e9d5ff" : "#a78bfa", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                {p.player}
+                                {isSelected && <span style={{ marginLeft: 4, fontSize: 10, color: "#a855f7" }}>✓ selected</span>}
+                              </div>
+                            </div>
+                            {/* Status */}
+                            <div style={{ fontSize: 10, color: ftOn ? "#c084fc" : "#6d28d9", whiteSpace: "nowrap" }}>
+                              {ftOn ? "Franchise Tag ON" : "Tag off"}
+                            </div>
+                            {/* Round */}
+                            <div style={{ padding: "1px 6px", borderRadius: 4, fontSize: 10, fontWeight: 800, opacity: ftOn ? 1 : 0.4, ...roundStyle(p.keeper_cost) }}>R{p.keeper_cost}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Ineligible / maxed */}
+                  {inelig.filter(p => !p.ft_eligible).length > 0 && (
                     <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid #1e293b" }}>
-                      <div style={{ fontSize: 9, letterSpacing: "0.1em", color: "#f87171", textTransform: "uppercase", marginBottom: 3 }}>Ineligible ({inelig.length})</div>
-                      {inelig.map(p => (
-                        <div key={p.player} style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "#9ca3af", padding: "1px 0" }}>
-                          <span style={{ textDecoration: "line-through" }}>{p.player}</span>
-                          <span style={{ color: "#9ca3af", fontStyle: "italic", maxWidth: 180, textAlign: "right" }}>
-                            {p.ft_maxed ? "FT maxed" : p.ft_eligible ? "expired (FT avail)" : p.ineligible_reason}
+                      <div style={{ fontSize: 9, letterSpacing: "0.1em", color: "#f87171", textTransform: "uppercase", marginBottom: 3 }}>
+                        Ineligible ({inelig.filter(p => !p.ft_eligible).length})
+                      </div>
+                      {inelig.filter(p => !p.ft_eligible).map(p => (
+                        <div key={p.player} style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "#9ca3af", padding: "2px 0" }}>
+                          <span style={{ textDecoration: "line-through", color: "#fca5a5" }}>{p.player}</span>
+                          <span style={{ color: "#f87171", fontStyle: "italic" }}>
+                            {p.ft_maxed ? "Franchise Tag maxed" : p.ineligible_reason}
                           </span>
                         </div>
                       ))}
                     </div>
                   )}
-                  {missing.length > 0 && <div style={{ marginTop: 6, fontSize: 10, color: "#f97316" }}>🚫 Traded: R{missing.join(", R")}</div>}
+
+                  {missing.length > 0 && <div style={{ marginTop: 6, fontSize: 10, color: "#f97316" }}>🚫 Traded picks: R{missing.join(", R")}</div>}
                 </div>
               );
             })}
