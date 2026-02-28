@@ -560,32 +560,81 @@ export default function KeeperManager() {
           display: "grid", gridTemplateColumns: isMobile ? "1fr" : "220px 1fr", gap: 20
         }}>
 
-          {/* Owner selector */}
-          {isMobile ? (
-            <select
-              value={selectedOwner}
-              onChange={e => setSelectedOwner(e.target.value)}
-              style={{
-                width: "100%", padding: "10px 14px", borderRadius: 8,
-                background: "#111827", color: ownerColor,
-                border: `1px solid ${ownerColor}`, fontSize: 14, fontWeight: 700,
-                position: "sticky", top: 0, zIndex: 10,
-              }}
-            >
-              {OWNER_ORDER.map(o => {
-                const sel = selections[o];
-                const ft = franchiseTags[o];
-                return (
-                  <option key={o} value={o}>
-                    {o} — {KEEPER_DATA[o].teamName} [{sel.size}/{MAX_KEEPERS}]
-                  </option>
-                );
-              })}
-            </select>
-          ) : (
-            <div>
-              <div style={{ fontSize: 10, letterSpacing: "0.2em", color: "#94a3b8", textTransform: "uppercase", marginBottom: 10 }}>Owners</div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          {/* ── OWNER SELECTOR — big & obvious for everyone ── */}
+          <div>
+            <div style={{
+              background: `linear-gradient(135deg, ${ownerColor}2a, ${ownerColor}0d)`,
+              border: `2px solid ${ownerColor}`,
+              borderRadius: 14,
+              padding: "16px",
+              position: isMobile ? "sticky" : "static",
+              top: 0,
+              zIndex: 20,
+              marginBottom: 12,
+            }}>
+              {/* Label */}
+              <div style={{
+                fontSize: 11, fontWeight: 900, letterSpacing: "0.18em",
+                color: ownerColor, textTransform: "uppercase", marginBottom: 8,
+                display: "flex", alignItems: "center", gap: 6,
+              }}>
+                <span style={{ fontSize: 18 }}>👇</span> SELECT YOUR TEAM
+              </div>
+
+              {/* The dropdown */}
+              <select
+                value={selectedOwner}
+                onChange={e => setSelectedOwner(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "14px 16px",
+                  borderRadius: 10,
+                  background: "#0d1117",
+                  color: ownerColor,
+                  border: `2px solid ${ownerColor}`,
+                  fontSize: isMobile ? 17 : 15,
+                  fontWeight: 800,
+                  cursor: "pointer",
+                  appearance: "auto",
+                  WebkitAppearance: "auto",
+                  lineHeight: 1.3,
+                }}
+              >
+                {OWNER_ORDER.map(o => {
+                  const sel = selections[o];
+                  const kept = sel.size;
+                  const status = kept === 0 ? "no picks yet" : kept === MAX_KEEPERS ? "FULL" : `${kept}/${MAX_KEEPERS} kept`;
+                  return (
+                    <option key={o} value={o}>
+                      {o} — {KEEPER_DATA[o].teamName}  [{status}]
+                    </option>
+                  );
+                })}
+              </select>
+
+              {/* Active team info strip */}
+              <div style={{
+                marginTop: 10, padding: "10px 12px", borderRadius: 8,
+                background: `${ownerColor}15`, border: `1px solid ${ownerColor}44`,
+                display: "flex", justifyContent: "space-between", alignItems: "center",
+              }}>
+                <div>
+                  <div style={{ fontSize: 15, fontWeight: 900, color: ownerColor }}>{selectedOwner}</div>
+                  <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 1 }}>{ownerData.teamName}</div>
+                </div>
+                <div style={{ textAlign: "center" }}>
+                  <div style={{
+                    fontSize: 22, fontWeight: 900,
+                    color: currentSel.size >= MAX_KEEPERS ? "#ef4444" : ownerColor,
+                  }}>{currentSel.size}/{MAX_KEEPERS}</div>
+                  <div style={{ fontSize: 9, color: "#94a3b8", letterSpacing: "0.1em" }}>KEEPERS</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Desktop: full clickable list below */}
+            {!isMobile && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
                 {OWNER_ORDER.map(owner => {
                   const data = KEEPER_DATA[owner];
                   const sel = selections[owner];
@@ -593,20 +642,20 @@ export default function KeeperManager() {
                   const isActive = selectedOwner === owner;
                   return (
                     <button key={owner} onClick={() => setSelectedOwner(owner)} style={{
-                      padding: "10px 14px", borderRadius: 8,
-                      border: isActive ? `1px solid ${color}` : "1px solid #1e293b",
+                      padding: "9px 12px", borderRadius: 8,
+                      border: isActive ? `2px solid ${color}` : "1px solid #1e293b",
                       cursor: "pointer", textAlign: "left",
-                      background: isActive ? `${color}18` : "#111827"
+                      background: isActive ? `${color}22` : "#111827",
                     }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                         <div>
                           <div style={{ fontSize: 13, fontWeight: 700, color: isActive ? color : "#94a3b8" }}>{owner}</div>
-                          <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 1 }}>{data.teamName}</div>
+                          <div style={{ fontSize: 10, color: isActive ? `${color}88` : "#4b5563", marginTop: 1 }}>{data.teamName}</div>
                         </div>
                         <div style={{
                           fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 999,
                           background: sel.size > 0 ? `${color}22` : "#1e293b",
-                          color: sel.size > 0 ? color : "#94a3b8",
+                          color: sel.size > 0 ? color : "#4b5563",
                           border: `1px solid ${sel.size > 0 ? color + "44" : "#1e293b"}`
                         }}>{sel.size}/{MAX_KEEPERS}</div>
                       </div>
@@ -614,8 +663,8 @@ export default function KeeperManager() {
                   );
                 })}
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
           {/* Main panel */}
           <div>
