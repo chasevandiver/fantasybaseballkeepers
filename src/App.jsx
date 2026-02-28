@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 
 // ============================================================
 // VERIFIED DATA — Cross-referenced from:
@@ -423,6 +423,59 @@ export default function KeeperManager() {
   });
   const [viewMode, setViewMode] = useState("team");
   const [nextYearCopied, setNextYearCopied] = useState(false);
+  const [saveStatus, setSaveStatus] = useState("idle"); // "idle" | "saving" | "saved" | "error"
+  const [loaded, setLoaded] = useState(false);
+
+  // ── Load from cloud storage on mount ──
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const [selResult, ftResult] = await Promise.all([
+          window.storage.get("keepers-2026-selections", true),
+          window.storage.get("keepers-2026-franchise-tags", true),
+        ]);
+        const init = () => { const o = {}; Object.keys(KEEPER_DATA).forEach(k => { o[k] = new Set(); }); return o; };
+        if (selResult?.value) {
+          const parsed = JSON.parse(selResult.value);
+          const rebuilt = init();
+          Object.entries(parsed).forEach(([owner, arr]) => { if (rebuilt[owner]) rebuilt[owner] = new Set(arr); });
+          setSelections(rebuilt);
+        }
+        if (ftResult?.value) {
+          const parsed = JSON.parse(ftResult.value);
+          const rebuilt = init();
+          Object.entries(parsed).forEach(([owner, arr]) => { if (rebuilt[owner]) rebuilt[owner] = new Set(arr); });
+          setFranchiseTags(rebuilt);
+        }
+      } catch (_) {
+        // Storage empty or unavailable — start fresh
+      } finally {
+        setLoaded(true);
+      }
+    };
+    load();
+  }, []);
+
+  // ── Save to cloud storage whenever picks change (debounced) ──
+  useEffect(() => {
+    if (!loaded) return; // Don't save the empty initial state before loading
+    setSaveStatus("saving");
+    const timer = setTimeout(async () => {
+      try {
+        const selObj = {}; Object.entries(selections).forEach(([o, s]) => { selObj[o] = [...s]; });
+        const ftObj  = {}; Object.entries(franchiseTags).forEach(([o, s]) => { ftObj[o]  = [...s]; });
+        await Promise.all([
+          window.storage.set("keepers-2026-selections", JSON.stringify(selObj), true),
+          window.storage.set("keepers-2026-franchise-tags", JSON.stringify(ftObj), true),
+        ]);
+        setSaveStatus("saved");
+        setTimeout(() => setSaveStatus("idle"), 2000);
+      } catch (_) {
+        setSaveStatus("error");
+      }
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [selections, franchiseTags, loaded]);
 
   const ownerData    = KEEPER_DATA[selectedOwner];
   const ownerColor   = OWNER_COLORS[selectedOwner];
@@ -539,7 +592,32 @@ export default function KeeperManager() {
               <div style={{ fontSize: 10, letterSpacing: "0.25em", color: "#94a3b8", textTransform: "uppercase", marginBottom: 3 }}>Pete Rose's Fantasy League</div>
               <h1 style={{ fontSize: isMobile ? 20 : 26, fontWeight: 900, color: "#f1f5f9", letterSpacing: "-0.02em", margin: 0 }}>⚾ 2026 KEEPER MANAGER</h1>
               <div style={{ fontSize: 10, color: "#22c55e", marginTop: 3 }}>✓ Verified · FT max = 5 seasons · SL=1 expired after 2025</div>
+              {/* Save status indicator */}
+              <div style={{ marginTop: 5, display: "flex", alignItems: "center", gap: 5, fontSize: 10 }}>
+                {saveStatus === "saving" && <><span style={{ display: "inline-block", width: 6, height: 6, borderRadius: "50%", background: "#f59e0b", animation: "pulse 1s infinite" }} /><span style={{ color: "#f59e0b" }}>Saving picks…</span></>}
+                {saveStatus === "saved"  && <><span style={{ display: "inline-block", width: 6, height: 6, borderRadius: "50%", background: "#22c55e" }} /><span style={{ color: "#22c55e" }}>Picks saved ✓</span></>}
+                {saveStatus === "error"  && <><span style={{ display: "inline-block", width: 6, height: 6, borderRadius: "50%", background: "#ef4444" }} /><span style={{ color: "#ef4444" }}>Save failed — check connection</span></>}
+                {saveStatus === "idle" && loaded && <span style={{ color: "#334155" }}>☁ Auto-saved</span>}
+                {!loaded && <span style={{ color: "#475569" }}>Loading picks…</span>}
+              </div>
             </div>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8, width: isMobile ? "100%" : "auto" }}>
+              {/* Reset button — clears all selections */}
+              <button
+                onClick={async () => {
+                  if (!window.confirm("Clear ALL keeper selections and franchise tags for everyone? This cannot be undone.")) return;
+                  const init = {}; Object.keys(KEEPER_DATA).forEach(o => { init[o] = new Set(); });
+                  setSelections({...init});
+                  setFranchiseTags({...init});
+                }}
+                style={{
+                  padding: "4px 12px", borderRadius: 5, border: "1px solid #7f1d1d",
+                  background: "#1c0707", color: "#fca5a5", fontSize: 10, fontWeight: 700,
+                  cursor: "pointer", alignSelf: isMobile ? "flex-start" : "flex-end",
+                }}
+              >
+                🗑 Reset All Picks
+              </button>
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap", width: isMobile ? "100%" : "auto" }}>
               {navItems.map(([mode, label]) => (
                 <button key={mode} onClick={() => setViewMode(mode)} style={{
@@ -551,6 +629,7 @@ export default function KeeperManager() {
                   color: viewMode === mode ? "#fff" : "#94a3b8",
                 }}>{label}</button>
               ))}
+            </div>
             </div>
           </div>
         </div>
