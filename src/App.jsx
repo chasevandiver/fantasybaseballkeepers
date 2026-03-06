@@ -848,7 +848,7 @@ export default function KeeperManager() {
                   </div>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                     {selectedPlayers.map(p => {
-                      const hasConflict = conflictRounds.has(p.keeper_cost);
+                      const hasConflict = conflictRounds.has(effectiveCost(p));
                       const hasMissing  = missingPicks.includes(p.keeper_cost) && effectiveCost(p) === p.keeper_cost;
                       const usingFT     = p.franchise_tag || currentFT.has(p.player);
                       const hasIssue    = hasConflict || hasMissing;
@@ -861,7 +861,7 @@ export default function KeeperManager() {
                           display: "flex", alignItems: "center", gap: 5
                         }}>
                           {hasConflict && "⚠️"}{hasMissing && !hasConflict && "🚫"}{usingFT && "⭐"}
-                          {p.player} <span style={{ opacity: 0.6 }}>→ R{p.keeper_cost}</span>
+                          {p.player} <span style={{ opacity: 0.6 }}>→ R{effectiveCost(p)}</span>
                         </div>
                       );
                     })}
@@ -896,7 +896,7 @@ export default function KeeperManager() {
               {eligiblePlayers.map(p => {
                 const isSelected  = currentSel.has(p.player);
                 const isDisabled  = !isSelected && currentSel.size >= MAX_KEEPERS;
-                const hasConflict = isSelected && conflictRounds.has(p.keeper_cost);
+                const hasConflict = isSelected && conflictRounds.has(effectiveCost(p));
                 const hasMissing  = missingPicks.includes(p.keeper_cost) && effectiveCost(p) === p.keeper_cost;
                 const usingFT     = p.franchise_tag || (p.ft_eligible && currentFT.has(p.player));
 
@@ -932,7 +932,11 @@ export default function KeeperManager() {
                             }}
                           >
                             <option value="">Pick?</option>
-                            {availRounds.filter(r => r < p.keeper_cost).map(r => (
+                            {availRounds.filter(r => {
+                              if (r >= p.keeper_cost) return false;
+                              const takenByOther = selectedPlayers.some(sp => sp.player !== p.player && effectiveCost(sp) === r);
+                              return !takenByOther;
+                            }).map(r => (
                               <option key={r} value={r}>R{r}</option>
                             ))}
                           </select>
@@ -1029,7 +1033,11 @@ export default function KeeperManager() {
                           }}
                         >
                           <option value="">— select a pick —</option>
-                          {availRounds.filter(r => r < p.keeper_cost).map(r => (
+                          {availRounds.filter(r => {
+                            if (r >= p.keeper_cost) return false;
+                            const takenByOther = selectedPlayers.some(sp => sp.player !== p.player && effectiveCost(sp) === r);
+                            return !takenByOther;
+                          }).map(r => (
                             <option key={r} value={r}>Use R{r} (forfeit R{r})</option>
                           ))}
                         </select>
@@ -1213,7 +1221,9 @@ export default function KeeperManager() {
               const color = OWNER_COLORS[owner];
               const kept  = data.players.filter(p => sel.has(p.player) && isEligibleForOwner(p, owner, ft));
               const missing = MISSING_PICKS_2026[data.teamName] || [];
-              const rc = {}; kept.forEach(p => { rc[p.keeper_cost] = (rc[p.keeper_cost] || 0) + 1; });
+              const po = pickOverrides[owner] || {};
+              const effCost = (p) => po[p.player] ?? p.keeper_cost;
+              const rc = {}; kept.forEach(p => { const c = effCost(p); rc[c] = (rc[c] || 0) + 1; });
               const conflicts = new Set(Object.entries(rc).filter(([,v]) => v > 1).map(([k]) => parseInt(k)));
               const inelig = data.players.filter(p => !isEligibleForOwner(p, owner, ft));
               // Players that have FT toggle available (ft_eligible) — shown in summary for toggling
@@ -1271,8 +1281,8 @@ export default function KeeperManager() {
                     <div style={{ fontSize: 12, color: "#4b5563", fontStyle: "italic", textAlign: "center", padding: "10px 0" }}>No keepers selected</div>
                   ) : kept.sort((a,b)=>a.keeper_cost-b.keeper_cost).map(p => {
                     const usingFT    = p.franchise_tag || ft.has(p.player);
-                    const hasMissing  = missing.includes(p.keeper_cost);
-                    const hasConflict = conflicts.has(p.keeper_cost);
+                    const hasMissing  = missing.includes(p.keeper_cost) && effCost(p) === p.keeper_cost;
+                    const hasConflict = conflicts.has(effCost(p));
                     const hasIssue    = hasMissing || hasConflict;
                     // service time remaining AFTER being kept in 2026
                     const sl_after = p.service_left === 2 ? 1 : 0;
@@ -1308,7 +1318,7 @@ export default function KeeperManager() {
                           {slLabel}
                         </div>
                         {/* Round badge */}
-                        <div style={{ padding: "2px 8px", borderRadius: 4, fontSize: 10, fontWeight: 800, minWidth: 36, textAlign: "center", ...roundStyle(p.keeper_cost) }}>R{p.keeper_cost}</div>
+                        <div style={{ padding: "2px 8px", borderRadius: 4, fontSize: 10, fontWeight: 800, minWidth: 36, textAlign: "center", ...roundStyle(effCost(p)) }}>R{effCost(p)}</div>
                       </div>
                     );
                   })}
