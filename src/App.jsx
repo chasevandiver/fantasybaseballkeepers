@@ -5,8 +5,8 @@ import { useState, useMemo, useEffect } from "react";
 // Project URL:  Supabase dashboard → Settings → API → Project URL
 // Anon key:     Supabase dashboard → Settings → API → anon public key
 // ============================================================
-const SUPABASE_URL = "https://YOUR_PROJECT_REF.supabase.co";
-const SUPABASE_KEY = "YOUR_ANON_PUBLIC_KEY";
+const SUPABASE_URL = "https://ugmniarsaqhvxejsruxt.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVnbW5pYXJzYXFodnhlanNydXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MDEyMTAsImV4cCI6MjA4NzM3NzIxMH0.Umxzu41l3wkQhcSdAgAirem0fkRfK571TtCq8afxeSs";
 
 // ============================================================
 // VERIFIED DATA — Cross-referenced from:
