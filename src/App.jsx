@@ -5,8 +5,8 @@ import { useState, useMemo, useEffect } from "react";
 // Project URL:  Supabase dashboard → Settings → API → Project URL
 // Anon key:     Supabase dashboard → Settings → API → anon public key
 // ============================================================
-const SUPABASE_URL = "https://ugmniarsaqhvxejsruxt.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVnbW5pYXJzYXFodnhlanNydXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MDEyMTAsImV4cCI6MjA4NzM3NzIxMH0.Umxzu41l3wkQhcSdAgAirem0fkRfK571TtCq8afxeSs";
+const SUPABASE_URL = "https://YOUR_PROJECT_REF.supabase.co";
+const SUPABASE_KEY = "YOUR_ANON_PUBLIC_KEY";
 
 // ============================================================
 // VERIFIED DATA — Cross-referenced from:
@@ -356,6 +356,15 @@ const OWNER_COLORS = {
 };
 const OWNER_ORDER = ["Andrew", "Brandon", "Chase", "Eric", "Faz", "Kelt", "Kenny", "Knetzer", "Landon", "Max", "Sam W", "Will"];
 
+// All standard rounds in a draft (1–28)
+const ALL_ROUNDS = Array.from({ length: 28 }, (_, i) => i + 1);
+
+// Returns rounds a team actually owns (standard minus missing, extras don't affect availability)
+function ownedRounds(teamName) {
+  const missing = MISSING_PICKS_2026[teamName] || [];
+  return ALL_ROUNDS.filter(r => !missing.includes(r));
+}
+
 // ─── helpers ────────────────────────────────────────────────
 function isEligibleForOwner(p, _ownerKey, ft) {
   if (p.ineligible_reason === null) return true;
@@ -431,6 +440,10 @@ export default function KeeperManager() {
   });
   const [viewMode, setViewMode] = useState("team");
   const [nextYearCopied, setNextYearCopied] = useState(false);
+  // pickOverrides[owner][playerName] = roundNumber — when owner uses a better pick instead
+  const [pickOverrides, setPickOverrides] = useState(() => {
+    const init = {}; Object.keys(KEEPER_DATA).forEach(o => { init[o] = {}; }); return init;
+  });
   const [saveStatus, setSaveStatus] = useState("idle"); // "idle" | "saving" | "saved" | "error"
   const [loaded, setLoaded] = useState(false);
 
@@ -445,7 +458,7 @@ export default function KeeperManager() {
     return res.json(); // array of rows
   };
 
-  const sbUpsert = async (selObj, ftObj) => {
+  const sbUpsert = async (selObj, ftObj, poObj) => {
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/keeper_picks`,
       {
@@ -460,6 +473,7 @@ export default function KeeperManager() {
           league_id: "pete-rose-2026",
           selections: selObj,
           franchise_tags: ftObj,
+          pick_overrides: poObj,
           updated_at: new Date().toISOString(),
         }),
       }
@@ -473,12 +487,16 @@ export default function KeeperManager() {
       try {
         const rows = await sbFetch();
         if (rows.length > 0) {
-          const { selections: selObj, franchise_tags: ftObj } = rows[0];
+          const { selections: selObj, franchise_tags: ftObj, pick_overrides: poObj } = rows[0];
           const initSets = (obj) => {
             const o = {}; Object.keys(KEEPER_DATA).forEach(k => { o[k] = new Set(obj?.[k] || []); }); return o;
           };
           setSelections(initSets(selObj));
           setFranchiseTags(initSets(ftObj));
+          if (poObj) {
+            const rebuilt = {}; Object.keys(KEEPER_DATA).forEach(o => { rebuilt[o] = poObj[o] || {}; });
+            setPickOverrides(rebuilt);
+          }
         }
       } catch (err) {
         console.error("Failed to load picks:", err);
@@ -497,7 +515,7 @@ export default function KeeperManager() {
       try {
         const selObj = {}; Object.entries(selections).forEach(([o, s]) => { selObj[o] = [...s]; });
         const ftObj  = {}; Object.entries(franchiseTags).forEach(([o, s]) => { ftObj[o]  = [...s]; });
-        await sbUpsert(selObj, ftObj);
+        await sbUpsert(selObj, ftObj, pickOverrides);
         setSaveStatus("saved");
         setTimeout(() => setSaveStatus("idle"), 2500);
       } catch (err) {
@@ -506,20 +524,35 @@ export default function KeeperManager() {
       }
     }, 800);
     return () => clearTimeout(timer);
-  }, [selections, franchiseTags, loaded]);
+  }, [selections, franchiseTags, pickOverrides, loaded]);
 
   const ownerData    = KEEPER_DATA[selectedOwner];
   const ownerColor   = OWNER_COLORS[selectedOwner];
   const currentSel   = selections[selectedOwner];
   const currentFT    = franchiseTags[selectedOwner];
+  const currentPO    = pickOverrides[selectedOwner] || {};
   const missingPicks = MISSING_PICKS_2026[ownerData.teamName] || [];
+  const availRounds  = ownedRounds(ownerData.teamName);
+
+  const setPickOverride = (playerName, round) => {
+    const newPO = { ...pickOverrides, [selectedOwner]: { ...currentPO, [playerName]: round } };
+    setPickOverrides(newPO);
+  };
+  const clearPickOverride = (playerName) => {
+    const newPO = { ...currentPO };
+    delete newPO[playerName];
+    setPickOverrides({ ...pickOverrides, [selectedOwner]: newPO });
+  };
+
+  // effectiveCost: use override round if set, else default keeper_cost
+  const effectiveCost = (p) => currentPO[p.player] ?? p.keeper_cost;
 
   const eligiblePlayers   = ownerData.players.filter(p => isEligibleForOwner(p, selectedOwner, currentFT));
   const ineligiblePlayers = ownerData.players.filter(p => !isEligibleForOwner(p, selectedOwner, currentFT));
   const selectedPlayers   = eligiblePlayers.filter(p => currentSel.has(p.player));
 
   const roundCounts = {};
-  selectedPlayers.forEach(p => { roundCounts[p.keeper_cost] = (roundCounts[p.keeper_cost] || 0) + 1; });
+  selectedPlayers.forEach(p => { const cost = effectiveCost(p); roundCounts[cost] = (roundCounts[cost] || 0) + 1; });
   const conflictRounds = new Set(Object.entries(roundCounts).filter(([, v]) => v > 1).map(([k]) => parseInt(k)));
 
   const toggleKeeper = (playerName) => {
@@ -816,7 +849,7 @@ export default function KeeperManager() {
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                     {selectedPlayers.map(p => {
                       const hasConflict = conflictRounds.has(p.keeper_cost);
-                      const hasMissing  = missingPicks.includes(p.keeper_cost);
+                      const hasMissing  = missingPicks.includes(p.keeper_cost) && effectiveCost(p) === p.keeper_cost;
                       const usingFT     = p.franchise_tag || currentFT.has(p.player);
                       const hasIssue    = hasConflict || hasMissing;
                       return (
@@ -838,9 +871,9 @@ export default function KeeperManager() {
                       ⚠️ <strong>Denman Rule:</strong> Multiple keepers forfeiting R{[...conflictRounds].join(", R")} — only one per round.
                     </div>
                   )}
-                  {selectedPlayers.some(p => missingPicks.includes(p.keeper_cost)) && (
+                  {selectedPlayers.some(p => missingPicks.includes(p.keeper_cost) && effectiveCost(p) === p.keeper_cost) && (
                     <div style={{ marginTop: 6, padding: "6px 10px", borderRadius: 6, background: "#7c2d1222", border: "1px solid #f9731644", color: "#fdba74", fontSize: 11 }}>
-                      🚫 <strong>Traded pick conflict:</strong> R{selectedPlayers.filter(p => missingPicks.includes(p.keeper_cost)).map(p => p.keeper_cost).join(", R")} no longer owned.
+                      🚫 <strong>Traded pick conflict:</strong> R{selectedPlayers.filter(p => missingPicks.includes(p.keeper_cost) && effectiveCost(p) === p.keeper_cost).map(p => effectiveCost(p)).join(", R")} no longer owned.
                     </div>
                   )}
                 </div>
@@ -864,7 +897,7 @@ export default function KeeperManager() {
                 const isSelected  = currentSel.has(p.player);
                 const isDisabled  = !isSelected && currentSel.size >= MAX_KEEPERS;
                 const hasConflict = isSelected && conflictRounds.has(p.keeper_cost);
-                const hasMissing  = missingPicks.includes(p.keeper_cost);
+                const hasMissing  = missingPicks.includes(p.keeper_cost) && effectiveCost(p) === p.keeper_cost;
                 const usingFT     = p.franchise_tag || (p.ft_eligible && currentFT.has(p.player));
 
                 if (isMobile) {
@@ -877,10 +910,38 @@ export default function KeeperManager() {
                       background: hasConflict ? "#7f1d1d22" : isSelected ? `${ownerColor}14` : isDisabled ? "#0d1117" : "#111827",
                       opacity: isDisabled ? 0.4 : 1,
                     }}>
-                      {/* round badge left */}
-                      <div style={{ width: 46, flexShrink: 0, padding: "4px 0", borderRadius: 6, fontSize: 12, fontWeight: 800, textAlign: "center", ...roundStyle(p.keeper_cost) }}>
-                        R{p.keeper_cost}{hasMissing ? "🚫" : ""}
-                      </div>
+                      {/* round badge / override picker */}
+                      {hasMissing ? (
+                        <div style={{ flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 2, width: 68 }}>
+                          <div style={{ fontSize: 9, color: "#f97316", fontWeight: 700, textAlign: "center" }}>R{p.keeper_cost}🚫</div>
+                          <select
+                            value={effectiveCost(p) === p.keeper_cost ? "" : effectiveCost(p)}
+                            onClick={e => e.stopPropagation()}
+                            onChange={e => {
+                              e.stopPropagation();
+                              const val = parseInt(e.target.value);
+                              if (val) setPickOverride(p.player, val);
+                              else clearPickOverride(p.player);
+                            }}
+                            style={{
+                              background: effectiveCost(p) !== p.keeper_cost ? "#0c2a0c" : "#1c0f00",
+                              color: effectiveCost(p) !== p.keeper_cost ? "#4ade80" : "#f97316",
+                              border: `1px solid ${effectiveCost(p) !== p.keeper_cost ? "#16a34a" : "#c2410c"}`,
+                              borderRadius: 5, fontSize: 10, fontWeight: 800,
+                              padding: "2px 3px", cursor: "pointer", width: "100%",
+                            }}
+                          >
+                            <option value="">Pick?</option>
+                            {availRounds.filter(r => r < p.keeper_cost).map(r => (
+                              <option key={r} value={r}>R{r}</option>
+                            ))}
+                          </select>
+                        </div>
+                      ) : (
+                        <div style={{ width: 46, flexShrink: 0, padding: "4px 0", borderRadius: 6, fontSize: 12, fontWeight: 800, textAlign: "center", ...roundStyle(p.keeper_cost) }}>
+                          R{p.keeper_cost}
+                        </div>
+                      )}
                       {/* name + subtitle */}
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 14, fontWeight: 700, color: isSelected ? "#f1f5f9" : "#94a3b8", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
@@ -946,9 +1007,41 @@ export default function KeeperManager() {
                     </div>
                     <div style={{ fontSize: 11, color: "#94a3b8" }}>Drafted R{p.round_2025}</div>
                     <div style={{ fontSize: 11, color: "#94a3b8" }}>→</div>
-                    <div style={{ padding: "3px 10px", borderRadius: 6, fontSize: 11, fontWeight: 800, minWidth: 90, textAlign: "center", ...roundStyle(p.keeper_cost) }}>
-                      Forfeit R{p.keeper_cost}{hasMissing ? " 🚫" : ""}
-                    </div>
+                    {/* Pick cost — with override dropdown if pick is missing */}
+                    {hasMissing ? (
+                      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, minWidth: 130 }}>
+                        <div style={{ fontSize: 9, color: "#f97316", fontWeight: 700 }}>🚫 R{p.keeper_cost} traded — use instead:</div>
+                        <select
+                          value={effectiveCost(p) === p.keeper_cost ? "" : effectiveCost(p)}
+                          onClick={e => e.stopPropagation()}
+                          onChange={e => {
+                            e.stopPropagation();
+                            const val = parseInt(e.target.value);
+                            if (val) setPickOverride(p.player, val);
+                            else clearPickOverride(p.player);
+                          }}
+                          style={{
+                            background: effectiveCost(p) !== p.keeper_cost ? "#0c2a0c" : "#1c0f00",
+                            color: effectiveCost(p) !== p.keeper_cost ? "#4ade80" : "#f97316",
+                            border: `1px solid ${effectiveCost(p) !== p.keeper_cost ? "#16a34a" : "#c2410c"}`,
+                            borderRadius: 6, fontSize: 11, fontWeight: 800,
+                            padding: "3px 6px", cursor: "pointer", width: "100%",
+                          }}
+                        >
+                          <option value="">— select a pick —</option>
+                          {availRounds.filter(r => r < p.keeper_cost).map(r => (
+                            <option key={r} value={r}>Use R{r} (forfeit R{r})</option>
+                          ))}
+                        </select>
+                        {effectiveCost(p) !== p.keeper_cost && (
+                          <div style={{ fontSize: 9, color: "#4ade80" }}>✓ Using R{effectiveCost(p)}</div>
+                        )}
+                      </div>
+                    ) : (
+                      <div style={{ padding: "3px 10px", borderRadius: 6, fontSize: 11, fontWeight: 800, minWidth: 90, textAlign: "center", ...roundStyle(p.keeper_cost) }}>
+                        Forfeit R{p.keeper_cost}
+                      </div>
+                    )}
                     <SL_TAG p={p} ftOn={usingFT} />
                     {/* FT toggle — visible for all ft_eligible players */}
                     {p.ft_eligible && (
@@ -987,7 +1080,7 @@ export default function KeeperManager() {
                 <div style={{ display: "flex", flexDirection: "column", gap: 3, marginBottom: 18 }}>
                   {ineligiblePlayers.filter(p => p.ft_eligible && currentFT.has(p.player)).map(p => {
                     const isSelected = currentSel.has(p.player);
-                    const hasMissing = missingPicks.includes(p.keeper_cost);
+                    const hasMissing = missingPicks.includes(p.keeper_cost) && effectiveCost(p) === p.keeper_cost;
                     return (
                       <div key={p.player} style={{
                         padding: isMobile ? "10px 10px" : "10px 14px", borderRadius: 8,
