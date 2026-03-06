@@ -451,7 +451,7 @@ export default function KeeperManager() {
   // Reads the single row for this league from the keeper_picks table
   const sbFetch = async () => {
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/keeper_picks?league_id=eq.pete-rose-2026&select=selections,franchise_tags`,
+      `${SUPABASE_URL}/rest/v1/keeper_picks?league_id=eq.pete-rose-2026&select=selections,franchise_tags,pick_overrides`,
       { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
     );
     if (!res.ok) throw new Error(await res.text());
