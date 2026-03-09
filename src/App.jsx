@@ -451,7 +451,7 @@ export default function KeeperManager() {
   // Reads the single row for this league from the keeper_picks table
   const sbFetch = async () => {
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/keeper_picks?league_id=eq.pete-rose-2026&select=selections,franchise_tags`,
+      `${SUPABASE_URL}/rest/v1/keeper_picks?league_id=eq.pete-rose-2026&select=selections,franchise_tags,pick_overrides`,
       { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
     );
     if (!res.ok) throw new Error(await res.text());
@@ -911,7 +911,7 @@ export default function KeeperManager() {
                       opacity: isDisabled ? 0.4 : 1,
                     }}>
                       {/* round badge / override picker */}
-                      {hasMissing ? (
+                      {missingPicks.includes(p.keeper_cost) ? (
                         <div style={{ flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 2, width: 68 }}>
                           <div style={{ fontSize: 9, color: "#f97316", fontWeight: 700, textAlign: "center" }}>R{p.keeper_cost}🚫</div>
                           <select
@@ -1012,7 +1012,7 @@ export default function KeeperManager() {
                     <div style={{ fontSize: 11, color: "#94a3b8" }}>Drafted R{p.round_2025}</div>
                     <div style={{ fontSize: 11, color: "#94a3b8" }}>→</div>
                     {/* Pick cost — with override dropdown if pick is missing */}
-                    {hasMissing ? (
+                    {missingPicks.includes(p.keeper_cost) ? (
                       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, minWidth: 130 }}>
                         <div style={{ fontSize: 9, color: "#f97316", fontWeight: 700 }}>🚫 R{p.keeper_cost} traded — use instead:</div>
                         <select
